@@ -314,8 +314,56 @@ void main(){
         val k = l.size * size
         val at = now() + delay
         val amt = if (l.s.mode == 0) 1f else .7f
-        splats.add(Splat(at, x, y, 0f, 220 * dir * k, inkColor(color, .9f * k * amt), .00045f * k))
-        splats.add(Splat(at + 40, x, y + .006f * dir, (Math.random().toFloat() - .5f) * 30, 160 * dir * k, inkColor(color, .5f * k * amt), .0007f * k))
+        val asp = if (H > 0) W.toFloat() / H else .5f
+        fun rnd() = Math.random().toFloat()
+        fun ink(after: Long, px: Float, py: Float, dx: Float, dy: Float, strength: Float, r: Float) {
+            splats.add(Splat(at + after, px, py, dx, dy, inkColor(color, strength * k * amt), r))
+        }
+        fun push(px: Float, py: Float, dx: Float, dy: Float, r: Float) {
+            splats.add(Splat(at, px, py, dx, dy, null, r))
+        }
+        val tau = 6.2831855f
+        when (settings.form) {
+            1 -> { // Bloom: a round soft cloud that opens evenly in every direction
+                ink(0, x, y, 0f, 0f, .75f, .0030f * k)
+                for (i in 0 until 8) {
+                    val a = i * tau / 8
+                    push(x + kotlin.math.cos(a) * .022f / asp, y + kotlin.math.sin(a) * .022f, kotlin.math.cos(a) * 70f, kotlin.math.sin(a) * 70f, .0005f)
+                }
+            }
+            2 -> { // Ring: a vortex ring, ink in a circle with a jet through its middle
+                val n = 18
+                for (i in 0 until n) {
+                    val a = i * tau / n
+                    ink(0, x + kotlin.math.cos(a) * .03f * k / asp, y + kotlin.math.sin(a) * .03f * k, 0f, -50f * dir, .24f, .00012f * k)
+                }
+                push(x, y, 0f, 260f * dir * k, .0009f * k)
+            }
+            3 -> { // Burst: thin rays shooting out from a point
+                val n = 16
+                for (i in 0 until n) {
+                    val a = i * tau / n + rnd() * .2f
+                    val len = .8f + rnd() * .6f
+                    ink(0, x + kotlin.math.cos(a) * .01f / asp, y + kotlin.math.sin(a) * .01f, kotlin.math.cos(a) * 320f * len, kotlin.math.sin(a) * 320f * len, .42f, .00018f * k)
+                }
+            }
+            4 -> { // Thread: a long ribbon that unrolls in the direction the ink falls
+                for (i in 0 until 18) {
+                    ink(i * 16L, x + (rnd() - .5f) * .004f, y + dir * i * .013f * k, (rnd() - .5f) * 10f, 150f * dir, .36f, .00012f * k)
+                }
+            }
+            5 -> { // Mist: a fine spray of tiny droplets
+                for (i in 0 until 26) {
+                    val a = rnd() * tau
+                    val r = rnd() * .07f * k
+                    ink(0, x + kotlin.math.cos(a) * r / asp, y + kotlin.math.sin(a) * r, (rnd() - .5f) * 50f, (rnd() - .5f) * 50f, .17f, .00028f * k)
+                }
+            }
+            else -> { // Swirl: the original heavy drop that rolls into plumes
+                ink(0, x, y, 0f, 220 * dir * k, .9f, .00045f * k)
+                ink(40, x, y + .006f * dir, (rnd() - .5f) * 30, 160 * dir * k, .5f, .0007f * k)
+            }
+        }
     }
 
     private fun driftDrop(delay: Long = 0) {
@@ -532,13 +580,14 @@ void main(){
             nextDrift = t + 5500 + (Math.random() * 4000).toLong()
         }
 
-        val g = l.weight * 60f
+        val form = FORMS[settings.form]
+        val g = l.weight * 60f * form.weightMul
         val diss = 1f - (.0045f * (1f - l.linger) + .00008f)
         if (warmAt != 0L && t >= warmAt) {
             warmAt = 0
-            repeat(70) { step(1f / 60f * l.speed, g, l.curl, l.s.mode, 1f) }
+            repeat(70) { step(1f / 60f * l.speed, g, l.curl * form.curlMul, l.s.mode, 1f) }
         }
-        step(dt * l.speed, g, l.curl, l.s.mode, if (t < clearUntil) .94f else diss)
+        step(dt * l.speed, g, l.curl * form.curlMul, l.s.mode, if (t < clearUntil) .94f else diss)
         render(l)
     }
 }

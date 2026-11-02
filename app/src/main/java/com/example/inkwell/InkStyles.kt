@@ -48,6 +48,33 @@ val STYLES = listOf(
     InkStyle("aurora", "Aurora", 1, true, "#0a0f24", "#03050d",
         listOf("Prism" to "#7fe3c0"),
         -.18f, 18f, .85f, 1.1f, .4f, true, true, false, prism = true),
+    InkStyle("blush", "Blush", 0, false, "#f6eeee", "#ead9da",
+        listOf("Wine" to "#7a2e46", "Plum" to "#4e2f5a", "Coral" to "#b5543f"),
+        .5f, 16f, .88f, 1f, .45f, true, true, true),
+    InkStyle("ember", "Ember", 1, true, "#1a0d09", "#080302",
+        listOf("Flame" to "#ff7a3d", "Amber" to "#ffbf5e", "Crimson" to "#ff4d5a"),
+        -.2f, 20f, .84f, 1f, .42f, true, true, false),
+    InkStyle("orchid", "Orchid", 1, true, "#150b20", "#05020a",
+        listOf("Magenta" to "#e86be0", "Violet" to "#9a7bff", "Pink" to "#ff9ad5"),
+        .2f, 22f, .84f, 1.05f, .42f, true, true, true),
+    InkStyle("moonstone", "Moonstone", 2, true, "#2a3138", "#0f1316",
+        listOf("Pearl" to "#e9edf0", "Silver" to "#aab4bd", "Ice" to "#bfe3f2"),
+        .6f, 14f, .94f, 1.3f, .4f, true, false, false),
+)
+
+/**
+ * How a drop of ink behaves and what it draws. Swirl is the original; the others
+ * damp the vortices so the shape stays readable instead of curling up.
+ */
+class InkForm(val name: String, val curlMul: Float, val weightMul: Float)
+
+val FORMS = listOf(
+    InkForm("Swirl", 1f, 1f),
+    InkForm("Bloom", .15f, .45f),
+    InkForm("Ring", .12f, .6f),
+    InkForm("Burst", .08f, .3f),
+    InkForm("Thread", .1f, 1f),
+    InkForm("Mist", .45f, .3f),
 )
 
 /** A style with the user's tweaks applied. */
@@ -93,6 +120,11 @@ class InkSettings private constructor(context: Context) {
     var inkIdx: Int
         get() = sp.getInt("ink", 0).coerceIn(0, STYLES[styleIdx].inks.lastIndex)
         set(v) = sp.edit().putInt("ink", v).apply()
+
+    /** Index into [FORMS]; shared by every style. */
+    var form: Int
+        get() = sp.getInt("form", 0).coerceIn(0, FORMS.lastIndex)
+        set(v) = sp.edit().putInt("form", v).apply()
 
     var rain: Boolean
         get() = sp.getBoolean("rain", true)

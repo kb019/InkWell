@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
@@ -211,6 +212,18 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSetWa
                 }
                 TextButton(onClick = { settings.styleIdx = settings.styleIdx - 1 }) { Text("‹", color = fg, fontSize = 26.sp) }
                 TextButton(onClick = { settings.styleIdx = settings.styleIdx + 1 }) { Text("›", color = fg, fontSize = 26.sp) }
+            }
+
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FORMS.forEachIndexed { i, f ->
+                    Pill(f.name, settings.form == i, fg, fg2) {
+                        settings.form = i
+                        sim.post { sim.sampleDrop() }
+                    }
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
