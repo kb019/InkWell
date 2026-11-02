@@ -17,13 +17,10 @@ class InkWallpaperService : WallpaperService() {
         private lateinit var sim: InkSim
         private var thread: EglThread? = null
         private var visible = false
-        private lateinit var motion: MotionSource
-        private var lastOffset = -1f
 
         override fun onCreate(surfaceHolder: SurfaceHolder) {
             super.onCreate(surfaceHolder)
             sim = InkSim(InkSettings.get(applicationContext))
-            motion = MotionSource(applicationContext, sim)
             setTouchEventsEnabled(true)
         }
 
@@ -49,20 +46,7 @@ class InkWallpaperService : WallpaperService() {
         override fun onVisibilityChanged(visible: Boolean) {
             this.visible = visible
             thread?.setPaused(!visible)
-            if (visible) {
-                motion.start()
-                sim.post { sim.sampleDrop() } // a fresh drop each time the screen wakes
-            } else {
-                motion.stop()
-            }
-        }
-
-        override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xStep: Float, yStep: Float, xPixels: Int, yPixels: Int) {
-            if (lastOffset >= 0f) {
-                val d = xOffset - lastOffset
-                if (d != 0f) sim.post { sim.slosh(d) }
-            }
-            lastOffset = xOffset
+            if (visible) sim.post { sim.sampleDrop() } // a fresh drop each time the screen wakes
         }
 
         override fun onTouchEvent(event: MotionEvent) {
@@ -76,7 +60,6 @@ class InkWallpaperService : WallpaperService() {
         }
 
         override fun onDestroy() {
-            motion.stop()
             thread?.finish()
             thread = null
             super.onDestroy()

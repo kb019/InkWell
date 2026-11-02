@@ -83,52 +83,23 @@ class InkSettings private constructor(context: Context) {
         sp.registerOnSharedPreferenceChangeListener(onChange)
     }
 
-    /** The manually chosen style; only used while [auto] is off. */
     var styleIdx: Int
         get() = sp.getInt("style", 0).coerceIn(0, STYLES.lastIndex)
-        private set(v) {
-            sp.edit().putInt("style", (v + STYLES.size) % STYLES.size).putInt("ink", 0).apply()
+        set(v) {
+            val i = (v + STYLES.size) % STYLES.size
+            if (i != styleIdx) sp.edit().putInt("style", i).putInt("ink", 0).apply()
         }
-
-    /** Let the time of day choose the style. */
-    var auto: Boolean
-        get() = sp.getBoolean("auto", true)
-        set(v) = sp.edit().putBoolean("auto", v).apply()
-
-    /** The style actually showing: by the clock when [auto] is on. */
-    fun effectiveIdx(): Int {
-        if (!auto) return styleIdx
-        val h = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-        return when (h) {
-            in 5..9 -> 0   // Porcelain: pale morning
-            in 10..15 -> 2 // Tide: bright day
-            in 16..18 -> 1 // Sumi: afternoon ink
-            in 19..20 -> 4 // Crema: warm evening
-            in 21..23 -> 3 // Abyss: night
-            in 0..1 -> 6   // Aurora: small hours
-            else -> 5      // Incense: before dawn
-        }
-    }
-
-    /** Pick a style by hand, which switches [auto] off. */
-    fun pickStyle(i: Int) {
-        sp.edit().putBoolean("auto", false).putInt("style", (i + STYLES.size) % STYLES.size).putInt("ink", 0).apply()
-    }
 
     var inkIdx: Int
-        get() = sp.getInt("ink", 0).coerceIn(0, STYLES[effectiveIdx()].inks.lastIndex)
+        get() = sp.getInt("ink", 0).coerceIn(0, STYLES[styleIdx].inks.lastIndex)
         set(v) = sp.edit().putInt("ink", v).apply()
-
-    var glass: Boolean
-        get() = sp.getBoolean("glass", true)
-        set(v) = sp.edit().putBoolean("glass", v).apply()
 
     var rain: Boolean
         get() = sp.getBoolean("rain", true)
         set(v) = sp.edit().putBoolean("rain", v).apply()
 
     fun look(): Look {
-        val s = STYLES[effectiveIdx()]
+        val s = STYLES[styleIdx]
         fun f(k: String, d: Float) = sp.getFloat("t_${s.id}_$k", d)
         fun b(k: String, d: Boolean) = sp.getFloat("t_${s.id}_$k", if (d) 1f else 0f) > .5f
         return Look(
@@ -138,11 +109,11 @@ class InkSettings private constructor(context: Context) {
     }
 
     fun setTweak(key: String, v: Float) {
-        sp.edit().putFloat("t_${STYLES[effectiveIdx()].id}_$key", v).apply()
+        sp.edit().putFloat("t_${STYLES[styleIdx].id}_$key", v).apply()
     }
 
     fun resetTweaks() {
-        val prefix = "t_${STYLES[effectiveIdx()].id}_"
+        val prefix = "t_${STYLES[styleIdx].id}_"
         val e = sp.edit()
         sp.all.keys.filter { it.startsWith(prefix) }.forEach { e.remove(it) }
         e.apply()

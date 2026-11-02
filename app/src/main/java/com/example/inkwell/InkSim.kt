@@ -32,10 +32,10 @@ void main(){vUv=aPosition*.5+.5;vL=vUv-vec2(texelSize.x,0.);vR=vUv+vec2(texelSiz
         val FS = mapOf(
             "splat" to H + """uniform sampler2D uTarget;uniform float aspectRatio,radius,uMin,uMax;uniform vec4 color;uniform vec2 point;
 void main(){vec2 p=vUv-point;p.x*=aspectRatio;vec4 s=exp(-dot(p,p)/radius)*color;vec4 b=texture2D(uTarget,vUv);gl_FragColor=clamp(b+s,vec4(uMin),vec4(uMax));}""",
-            "buoy" to H + """uniform sampler2D uVelocity,uDye;uniform float g,dt,seed,uMode;uniform vec2 uForce;
+            "buoy" to H + """uniform sampler2D uVelocity,uDye;uniform float g,dt,seed,uMode;
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 void main(){vec2 v=texture2D(uVelocity,vUv).xy;vec4 D=max(texture2D(uDye,vUv),0.);float d=min(uMode<.5?dot(D.rgb,vec3(.333)):D.a*1.6,2.5);
-float n=h(floor(vUv*90.)+seed)-.5;v.y-=g*d*dt;v.x+=n*abs(g)*d*dt*.35;v+=uForce*d*dt;gl_FragColor=vec4(v,0.,1.);}""",
+float n=h(floor(vUv*90.)+seed)-.5;v.y-=g*d*dt;v.x+=n*abs(g)*d*dt*.35;gl_FragColor=vec4(v,0.,1.);}""",
             "advect" to H + """uniform sampler2D uVelocity,uSource;uniform vec2 texelSize,dyeTexelSize;uniform float dt,dissipation;
 void main(){vec2 co=vUv-dt*texture2D(uVelocity,vUv).xy*texelSize;vec4 r=texture2D(uSource,co);gl_FragColor=r*dissipation;}""",
             "divergence" to H + """uniform sampler2D uVelocity;void main(){float L=texture2D(uVelocity,vL).x,R=texture2D(uVelocity,vR).x,T=texture2D(uVelocity,vT).y,B=texture2D(uVelocity,vB).y;
@@ -48,15 +48,13 @@ gl_FragColor=vec4((L+R+B+T-texture2D(uDivergence,vUv).x)*.25,0.,0.,1.);}""",
             "gradient" to H + """uniform sampler2D uPressure,uVelocity;void main(){float L=texture2D(uPressure,vL).x,R=texture2D(uPressure,vR).x,T=texture2D(uPressure,vT).x,B=texture2D(uPressure,vB).x;
 gl_FragColor=vec4(texture2D(uVelocity,vUv).xy-vec2(R-L,T-B),0.,1.);}""",
             "clear" to H + """uniform sampler2D uTexture;uniform float value;void main(){gl_FragColor=value*texture2D(uTexture,vUv);}""",
-            "display" to H + """uniform sampler2D uTexture;uniform vec3 top,bot;uniform float uMode,time,uShade,uGlow,uCaustic,uGlass,uRadius;uniform vec2 res,tx;
+            "display" to H + """uniform sampler2D uTexture;uniform vec3 top,bot;uniform float uMode,time,uShade,uGlow,uCaustic;uniform vec2 res,tx;
 float hsh(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 vec4 S(vec2 uv){return max(texture2D(uTexture,uv),0.);}
 float D(vec2 uv){vec4 s=S(uv);return uMode<.5?dot(s.rgb,vec3(.333)):s.a;}
 void main(){
-  vec2 gr=vec2(D(vUv+vec2(tx.x*2.,0.))-D(vUv-vec2(tx.x*2.,0.)),D(vUv+vec2(0.,tx.y*2.))-D(vUv-vec2(0.,tx.y*2.)));
-  vec2 uv=vUv+gr*.012*uGlass;
-  vec4 A=S(uv);
-  vec4 Ab=vec4(0.);for(int i=0;i<8;i++){float a=float(i)*.785398;Ab+=S(uv+vec2(cos(a),sin(a))*tx*7.);}Ab/=8.;
+  vec4 A=S(vUv);
+  vec4 Ab=vec4(0.);for(int i=0;i<8;i++){float a=float(i)*.785398;Ab+=S(vUv+vec2(cos(a),sin(a))*tx*7.);}Ab/=8.;
   vec4 Am=A*(1.-.18*uGlow)+Ab*.4*uGlow;
   float gy=D(vUv+vec2(0.,tx.y*2.))-D(vUv-vec2(0.,tx.y*2.));
   float lit=clamp(-gy*2.2,-.5,.5)*uShade;
@@ -69,20 +67,6 @@ void main(){
   float ca=sin(vUv.x*34.+time*.3+sin(vUv.y*20.+time*.21)*1.7)*sin(vUv.y*27.-time*.25);
   lin+=water*ca*.025*smoothstep(.55,1.,vUv.y)*uCaustic+ca*.0007*uCaustic*step(.5,uMode);
   vec3 c=pow(max(lin,0.),vec3(1./2.2));
-  if(uGlass>.5){
-    vec2 px=vUv*res,hf=res*.5,qq=abs(px-hf)-(hf-uRadius);
-    float inside=-(length(max(qq,0.))+min(max(qq.x,qq.y),0.)-uRadius);
-    float k=res.y/820.;
-    vec2 nd=normalize((px-hf)/hf+1e-4);float lf=dot(nd,normalize(vec2(-.62,.78)));
-    float rim=exp(-inside/(10.*k));
-    c+=vec3(1.)*rim*max(lf,0.)*.16;
-    c*=1.-rim*max(-lf,0.)*.22;
-    c+=vec3(1.)*exp(-pow((inside-16.*k)/(2.2*k),2.))*max(lf,0.)*.06;
-    c*=1.-.1*smoothstep(.25,.9,length((vUv-.5)*vec2(1.,.6))*1.6);
-    float ph=mod(time*.07,2.6)-1.3;float sw=exp(-pow(dot(vUv-.5,normalize(vec2(1.,.55)))-ph,2.)*55.);
-    c+=vec3(1.)*sw*.045*(1.-smoothstep(.2,1.2,Am.a+dot(Am.rgb,vec3(.2))));
-    vec3 n=normalize(vec3(-gr*6.,1.));c+=vec3(1.)*pow(max(dot(n,normalize(vec3(-.4,.6,.7))),0.),60.)*.075*uShade;
-  }
   c+=(hsh(vUv*res+fract(time))-.5)*.01;
   vec2 q=vUv-.5;c*=1.-dot(q,q)*.12;
   gl_FragColor=vec4(c,1.);}""",
@@ -94,7 +78,6 @@ void main(){
         )
 
         fun now() = System.nanoTime() / 1_000_000
-        const val FORCE = 34f
     }
 
     // ---------------------------------------------------------------- GL helpers
@@ -224,39 +207,6 @@ void main(){
 
     @Volatile
     private var lastTouch = 0L
-
-    // Device motion: tilt is a unit-ish vector in screen axes (x right, y up) pointing "downhill".
-    @Volatile
-    private var tiltX = 0f
-
-    @Volatile
-    private var tiltY = 0f
-    private var pushX = 0f
-    private var smX = 0f
-    private var smY = 0f
-    private var lastAutoCheck = 0L
-
-    fun setTilt(x: Float, y: Float) {
-        tiltX = x; tiltY = y
-    }
-
-    /** A page swipe on the home screen: the liquid lags behind the scroll, then settles. */
-    fun slosh(delta: Float) {
-        pushX = (pushX + delta * 9f).coerceIn(-2.5f, 2.5f)
-        lastTouch = now()
-    }
-
-    /** A shake: big stirs through the liquid and a few fresh drops. Strength is roughly 0..1. */
-    fun shake(strength: Float) {
-        if (look == null || W == 0) return
-        lastTouch = now()
-        repeat(4) {
-            val a = Math.random().toFloat() * 6.283f
-            splats.add(Splat(0, .15f + Math.random().toFloat() * .7f, .2f + Math.random().toFloat() * .6f,
-                kotlin.math.cos(a) * 900f * strength, kotlin.math.sin(a) * 900f * strength, null, .012f))
-        }
-        driftDrop(); driftDrop(200)
-    }
 
     /** True when nothing has been touched for a while, so the host can throttle the frame rate. */
     fun idle() = now() - lastTouch > 3000
@@ -475,14 +425,14 @@ void main(){
         }
     }
 
-    private fun step(dt: Float, g: Float, curl: Float, mode: Int, dyeDiss: Float, fx: Float = 0f, fy: Float = 0f) {
+    private fun step(dt: Float, g: Float, curl: Float, mode: Int, dyeDiss: Float) {
         val vel = vel!!; val dye = dye!!; val pres = pres!!; val div = div!!; val curlF = curlF!!
         val f = dt * 60f
         var p = progs["buoy"]!!
         p.use()
         p.f2("texelSize", vel.tx, vel.ty)
         p.i("uVelocity", vel.read.attach(0)); p.i("uDye", dye.read.attach(1))
-        p.f("g", g); p.f("dt", dt); p.f("uMode", mode.toFloat()); p.f2("uForce", fx, fy)
+        p.f("g", g); p.f("dt", dt); p.f("uMode", mode.toFloat())
         seedF = (seedF + 1.618f) % 97f
         p.f("seed", seedF)
         blit(vel.write); vel.swap()
@@ -536,7 +486,6 @@ void main(){
         p.f3("top", top[0], top[1], top[2]); p.f3("bot", bot[0], bot[1], bot[2])
         p.f("uMode", l.s.mode.toFloat()); p.f("time", simT)
         p.f("uShade", if (l.shade) 1f else 0f); p.f("uGlow", if (l.glow) 1f else 0f); p.f("uCaustic", if (l.caustic) 1f else 0f)
-        p.f("uGlass", if (settings.glass) 1f else 0f); p.f("uRadius", W * .13f)
         p.f2("res", W.toFloat(), H.toFloat()); p.f2("tx", dye.tx, dye.ty); p.f2("texelSize", 0f, 0f)
         blit(null)
     }
@@ -558,10 +507,6 @@ void main(){
         lastT = t
         simT += dt
 
-        if (t - lastAutoCheck > 1000) {
-            lastAutoCheck = t
-            if (STYLES[settings.effectiveIdx()].id != look?.s?.id) seenVersion = -1
-        }
         refreshLook()
         val l = look!!
         if (styleId != l.s.id) {
@@ -593,10 +538,7 @@ void main(){
             warmAt = 0
             repeat(70) { step(1f / 60f * l.speed, g, l.curl, l.s.mode, 1f) }
         }
-        smX += (tiltX + pushX - smX) * min(1f, dt * 6f)
-        smY += (tiltY - smY) * min(1f, dt * 6f)
-        pushX *= .92f.pow(dt * 60f)
-        step(dt * l.speed, g, l.curl, l.s.mode, if (t < clearUntil) .94f else diss, smX * FORCE, smY * FORCE)
+        step(dt * l.speed, g, l.curl, l.s.mode, if (t < clearUntil) .94f else diss)
         render(l)
     }
 }

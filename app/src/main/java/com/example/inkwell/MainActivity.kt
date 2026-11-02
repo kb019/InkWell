@@ -67,7 +67,6 @@ import javax.microedition.khronos.opengles.GL10
 
 class MainActivity : ComponentActivity() {
     private var glView: InkGlView? = null
-    private var motion: MotionSource? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +77,7 @@ class MainActivity : ComponentActivity() {
         }
         val settings = InkSettings.get(this)
         setContent {
-            Studio(settings, onGlView = { glView = it }, onSim = { motion = MotionSource(this, it) }, onSetWallpaper = { setWallpaper(this) })
+            Studio(settings, onGlView = { glView = it }, onSetWallpaper = { setWallpaper(this) })
         }
     }
 
@@ -99,11 +98,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         hideSystemBars()
         glView?.onResume()
-        motion?.start()
     }
 
     override fun onPause() {
-        motion?.stop()
         glView?.onPause()
         super.onPause()
     }
@@ -167,7 +164,7 @@ private fun fmt(key: String, v: Float) = when (key) {
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: (InkSim) -> Unit, onSetWallpaper: () -> Unit) {
+private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSetWallpaper: () -> Unit) {
     var tick by remember { mutableIntStateOf(0) }
     DisposableEffect(settings) {
         val l = { tick++; Unit }
@@ -177,7 +174,7 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
     @Suppress("UNUSED_EXPRESSION") tick
     val look = settings.look()
     val s = look.s
-    val sim = remember { InkSim(settings).also(onSim) }
+    val sim = remember { InkSim(settings) }
     var tuneOpen by remember { mutableStateOf(false) }
 
     val fg = if (s.dark) Color(0xFFF1EFE9) else Color(0xFF1D1C1A)
@@ -196,7 +193,7 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
         AndroidView(factory = { ctx -> InkGlView(ctx, sim).also(onGlView) }, modifier = Modifier.fillMaxSize())
 
         Text(
-            "Live preview — tilt, shake, tap, drag",
+            "Live preview — tap to drop, drag to stir",
             color = fg2, fontSize = 11.sp, letterSpacing = 1.sp,
             modifier = Modifier.windowInsetsPadding(WindowInsets.statusBarsIgnoringVisibility).padding(20.dp).align(Alignment.TopStart),
         )
@@ -209,11 +206,11 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("%02d / %02d%s".format(settings.effectiveIdx() + 1, STYLES.size, if (settings.auto) "  ·  BY THE CLOCK" else ""), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
+                    Text("%02d / %02d".format(settings.styleIdx + 1, STYLES.size), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
                     Text(s.name, color = fg, fontSize = 24.sp, fontWeight = FontWeight.Light)
                 }
-                TextButton(onClick = { settings.pickStyle(settings.effectiveIdx() - 1) }) { Text("‹", color = fg, fontSize = 26.sp) }
-                TextButton(onClick = { settings.pickStyle(settings.effectiveIdx() + 1) }) { Text("›", color = fg, fontSize = 26.sp) }
+                TextButton(onClick = { settings.styleIdx = settings.styleIdx - 1 }) { Text("‹", color = fg, fontSize = 26.sp) }
+                TextButton(onClick = { settings.styleIdx = settings.styleIdx + 1 }) { Text("›", color = fg, fontSize = 26.sp) }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -235,9 +232,7 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
             }
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Pill("Auto", settings.auto, fg, fg2) { settings.auto = !settings.auto }
                 Pill("Rain", settings.rain, fg, fg2) { settings.rain = !settings.rain }
-                Pill("Glass", settings.glass, fg, fg2) { settings.glass = !settings.glass }
                 Pill("Clear", false, fg, fg2) { sim.post { sim.clear() } }
                 Pill("Tune", tuneOpen, fg, fg2) { tuneOpen = !tuneOpen }
             }
