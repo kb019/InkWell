@@ -4,12 +4,20 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- the drop -->
-    <path
-        android:fillColor="#F1EFE9"
-        android:pathData="M54,25C54,25 73,47 73,60A19,19 0 0 1 35,60C35,47 54,25 54,25Z" />
-    <!-- a second, smaller drop falling away -->
-    <path
-        android:fillColor="#B8402E"
-        android:pathData="M69,76C69,76 74,82 74,85.5A5,5 0 0 1 64,85.5C64,82 69,76 69,76Z" />
+    <!-- scaled into the adaptive-icon safe zone so round masks never clip the small drop -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.78"
+        android:scaleY="0.78"
+        android:translateY="-3">
+        <!-- the drop -->
+        <path
+            android:fillColor="#F1EFE9"
+            android:pathData="M54,25C54,25 73,47 73,60A19,19 0 0 1 35,60C35,47 54,25 54,25Z" />
+        <!-- a second, smaller drop falling away -->
+        <path
+            android:fillColor="#B8402E"
+            android:pathData="M69,76C69,76 74,82 74,85.5A5,5 0 0 1 64,85.5C64,82 69,76 69,76Z" />
+    </group>
 </vector>

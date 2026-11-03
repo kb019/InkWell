@@ -1,4 +1,8 @@
-# Inkwell
+<p align="center">
+  <img src="docs/images/logo.png" alt="Inkwell logo" width="120">
+</p>
+
+<h1 align="center">Inkwell</h1>
 
 Inkwell is an Android live wallpaper that simulates ink dropped into liquid. Touch the screen to add ink, drag to stir it, or leave it alone and new drops arrive on their own.
 
