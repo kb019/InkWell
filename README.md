@@ -26,8 +26,6 @@ The fluid is a real-time simulation running on the GPU, so the motion is compute
   <img src="docs/images/styles.webp" alt="Porcelain, Sumi, Tide, Abyss, Crema, Incense and Aurora">
 </p>
 
-<p align="center"><sub>Frames from the simulation. Left to right: Porcelain, Sumi, Tide, Abyss, Crema, Incense, Aurora.</sub></p>
-
 ## Requirements
 
 - Android 8.0 (API 26) or newer
