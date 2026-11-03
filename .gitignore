@@ -18,3 +18,6 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# local IDE state
+/.idea/deploymentTargetSelector.xml
