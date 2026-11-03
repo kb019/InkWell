@@ -4,8 +4,12 @@
 
    keytool -genkeypair -v -keystore inkwell-upload.jks -alias inkwell -keyalg RSA -keysize 2048 -validity 10000
 
-2. Copy keystore.properties.template to keystore.properties and fill in the passwords.
-   Both keystore.properties and *.jks are git-ignored.
+2. Create keystore.properties in the project root with these keys (git-ignored, as is *.jks):
+
+   storeFile=inkwell-upload.jks
+   storePassword=...
+   keyAlias=inkwell
+   keyPassword=...
 
 3. Build the bundle:
 
