@@ -126,6 +126,16 @@ class InkSettings private constructor(context: Context) {
         get() = sp.getInt("form", 0).coerceIn(0, FORMS.lastIndex)
         set(v) = sp.edit().putInt("form", v).apply()
 
+    /** Tilt the phone and the ink flows downhill. Off by default; uses the accelerometer only while visible. */
+    var tilt: Boolean
+        get() = sp.getBoolean("tilt", false)
+        set(v) = sp.edit().putBoolean("tilt", v).apply()
+
+    /** Shake the phone to stir the liquid and add drops. */
+    var shake: Boolean
+        get() = sp.getBoolean("shake", false)
+        set(v) = sp.edit().putBoolean("shake", v).apply()
+
     var rain: Boolean
         get() = sp.getBoolean("rain", true)
         set(v) = sp.edit().putBoolean("rain", v).apply()

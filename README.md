@@ -78,3 +78,5 @@ The wallpaper engine runs its own EGL context on a render thread. Rendering paus
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+The fluid solver is derived from [WebGL Fluid Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) by Pavel Dobryakov (MIT). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

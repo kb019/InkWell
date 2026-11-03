@@ -21,6 +21,7 @@ import kotlin.math.roundToInt
 
 /**
  * Stable-fluids ink simulation with buoyancy, ported from the Inkwell Glass web prototype.
+ * The solver is derived from WebGL Fluid Simulation by Pavel Dobryakov (MIT); see THIRD_PARTY_NOTICES.md.
  * The dye texture holds colour in rgb and density in alpha, so heavy ink pulls the liquid down
  * (or light smoke lifts it) and rolls into plumes.
  *
@@ -41,10 +42,10 @@ void main(){vUv=aPosition*.5+.5;vL=vUv-vec2(texelSize.x,0.);vR=vUv+vec2(texelSiz
         val FS = mapOf(
             "splat" to H + """uniform sampler2D uTarget;uniform float aspectRatio,radius,uMin,uMax;uniform vec4 color;uniform vec2 point;
 void main(){vec2 p=vUv-point;p.x*=aspectRatio;vec4 s=exp(-dot(p,p)/radius)*color;vec4 b=texture2D(uTarget,vUv);gl_FragColor=clamp(b+s,vec4(uMin),vec4(uMax));}""",
-            "buoy" to H + """uniform sampler2D uVelocity,uDye;uniform float g,dt,seed,uMode;
+            "buoy" to H + """uniform sampler2D uVelocity,uDye;uniform float g,dt,seed,uMode;uniform vec2 uForce;
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
 void main(){vec2 v=texture2D(uVelocity,vUv).xy;vec4 D=max(texture2D(uDye,vUv),0.);float d=min(uMode<.5?dot(D.rgb,vec3(.333)):D.a*1.6,2.5);
-float n=h(floor(vUv*90.)+seed)-.5;v.y-=g*d*dt;v.x+=n*abs(g)*d*dt*.35;gl_FragColor=vec4(v,0.,1.);}""",
+float n=h(floor(vUv*90.)+seed)-.5;v.y-=g*d*dt;v.x+=n*abs(g)*d*dt*.35;v+=uForce*d*dt;gl_FragColor=vec4(v,0.,1.);}""",
             "advect" to H + """uniform sampler2D uVelocity,uSource;uniform vec2 texelSize,dyeTexelSize;uniform float dt,dissipation;
 void main(){vec2 co=vUv-dt*texture2D(uVelocity,vUv).xy*texelSize;vec4 r=texture2D(uSource,co);gl_FragColor=r*dissipation;}""",
             "divergence" to H + """uniform sampler2D uVelocity;void main(){float L=texture2D(uVelocity,vL).x,R=texture2D(uVelocity,vR).x,T=texture2D(uVelocity,vT).y,B=texture2D(uVelocity,vB).y;
@@ -87,6 +88,7 @@ void main(){
         )
 
         fun now() = System.nanoTime() / 1_000_000
+        const val FORCE = 55f
 
         /** Set from the live context in [create]; picks the texture format used for the fluid fields. */
         private var es3 = true
@@ -230,6 +232,31 @@ void main(){
 
     /** True when nothing has been touched for a while, so the host can throttle the frame rate. */
     fun idle() = now() - lastTouch > 3000
+
+    // Device motion: tilt is a unit-ish vector in screen axes (x right, y up) pointing "downhill".
+    @Volatile
+    private var tiltX = 0f
+
+    @Volatile
+    private var tiltY = 0f
+    private var smX = 0f
+    private var smY = 0f
+
+    fun setTilt(x: Float, y: Float) {
+        tiltX = x; tiltY = y
+    }
+
+    /** A shake: big stirs through the liquid and a few fresh drops. Strength is roughly 0..1. */
+    fun shake(strength: Float) {
+        if (look == null || W == 0) return
+        lastTouch = now()
+        repeat(4) {
+            val a = Math.random().toFloat() * 6.283f
+            splats.add(Splat(0, .15f + Math.random().toFloat() * .7f, .2f + Math.random().toFloat() * .6f,
+                kotlin.math.cos(a) * 900f * strength, kotlin.math.sin(a) * 900f * strength, null, .012f))
+        }
+        driftDrop(); driftDrop(200)
+    }
 
     // ---------------------------------------------------------------- lifecycle
     /** Call whenever a fresh GL context is current. */
@@ -516,14 +543,14 @@ void main(){
         }
     }
 
-    private fun step(dt: Float, g: Float, curl: Float, mode: Int, dyeDiss: Float) {
+    private fun step(dt: Float, g: Float, curl: Float, mode: Int, dyeDiss: Float, fx: Float = 0f, fy: Float = 0f) {
         val vel = vel!!; val dye = dye!!; val pres = pres!!; val div = div!!; val curlF = curlF!!
         val f = dt * 60f
         var p = progs["buoy"]!!
         p.use()
         p.f2("texelSize", vel.tx, vel.ty)
         p.i("uVelocity", vel.read.attach(0)); p.i("uDye", dye.read.attach(1))
-        p.f("g", g); p.f("dt", dt); p.f("uMode", mode.toFloat())
+        p.f("g", g); p.f("dt", dt); p.f("uMode", mode.toFloat()); p.f2("uForce", fx, fy)
         seedF = (seedF + 1.618f) % 97f
         p.f("seed", seedF)
         blit(vel.write); vel.swap()
@@ -634,7 +661,9 @@ void main(){
             warmAt = 0
             repeat(70) { step(1f / 60f * l.speed, g, l.curl * form.curlMul, l.s.mode, 1f) }
         }
-        step(dt * l.speed, g, l.curl * form.curlMul, l.s.mode, if (t < clearUntil) .94f else diss)
+        smX += (tiltX - smX) * min(1f, dt * 6f)
+        smY += (tiltY - smY) * min(1f, dt * 6f)
+        step(dt * l.speed, g, l.curl * form.curlMul, l.s.mode, if (t < clearUntil) .94f else diss, smX * FORCE, smY * FORCE)
         render(l)
         captureCb?.let {
             captureCb = null

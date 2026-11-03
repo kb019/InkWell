@@ -17,10 +17,14 @@ class InkWallpaperService : WallpaperService() {
         private lateinit var sim: InkSim
         private var thread: EglThread? = null
         private var visible = false
+        private lateinit var motion: MotionSource
+        private val onSettings = { motion.update() }
 
         override fun onCreate(surfaceHolder: SurfaceHolder) {
             super.onCreate(surfaceHolder)
             sim = InkSim(InkSettings.get(applicationContext))
+            motion = MotionSource(applicationContext, sim, InkSettings.get(applicationContext))
+            InkSettings.get(applicationContext).listeners.add(onSettings)
             setTouchEventsEnabled(true)
         }
 
@@ -46,6 +50,7 @@ class InkWallpaperService : WallpaperService() {
         override fun onVisibilityChanged(visible: Boolean) {
             this.visible = visible
             thread?.setPaused(!visible)
+            motion.setVisible(visible)
             if (visible) sim.post { sim.sampleDrop() } // a fresh drop each time the screen wakes
         }
 
@@ -60,6 +65,8 @@ class InkWallpaperService : WallpaperService() {
         }
 
         override fun onDestroy() {
+            InkSettings.get(applicationContext).listeners.remove(onSettings)
+            motion.setVisible(false)
             thread?.finish()
             thread = null
             super.onDestroy()
