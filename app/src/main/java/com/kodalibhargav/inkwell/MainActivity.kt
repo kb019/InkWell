@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import androidx.lifecycle.Lifecycle
 import androidx.activity.result.contract.ActivityResultContracts
 import android.app.Activity
 import android.app.WallpaperManager
@@ -76,6 +77,7 @@ import javax.microedition.khronos.opengles.GL10
 
 class MainActivity : ComponentActivity() {
     private var glView: InkGlView? = null
+    private var motion: MotionSource? = null
     private var pendingSim: InkSim? = null
 
     private val storagePermission =
@@ -117,7 +119,13 @@ class MainActivity : ComponentActivity() {
         }
         val settings = InkSettings.get(this)
         setContent {
-            Studio(settings, onGlView = { glView = it }, onSetWallpaper = { setWallpaper(this) }, onSave = ::saveImage)
+            Studio(settings, onGlView = { glView = it }, onSim = { sim ->
+                    motion = MotionSource(this, sim, settings).also { m ->
+                        settings.listeners.add { m.update() }
+                        m.setVisible(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+                    }
+                },
+                onSetWallpaper = { setWallpaper(this) }, onSave = ::saveImage)
         }
     }
 
@@ -138,9 +146,11 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         hideSystemBars()
         glView?.onResume()
+        motion?.setVisible(true)
     }
 
     override fun onPause() {
+        motion?.setVisible(false)
         glView?.onPause()
         super.onPause()
     }
@@ -204,7 +214,7 @@ private fun fmt(key: String, v: Float) = when (key) {
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSetWallpaper: () -> Unit, onSave: (InkSim) -> Unit) {
+private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: (InkSim) -> Unit, onSetWallpaper: () -> Unit, onSave: (InkSim) -> Unit) {
     var tick by remember { mutableIntStateOf(0) }
     DisposableEffect(settings) {
         val l = { tick++; Unit }
@@ -214,7 +224,7 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSetWa
     @Suppress("UNUSED_EXPRESSION") tick
     val look = settings.look()
     val s = look.s
-    val sim = remember { InkSim(settings) }
+    val sim = remember { InkSim(settings).also(onSim) }
     var tuneOpen by remember { mutableStateOf(false) }
     var unsupported by remember { mutableStateOf(false) }
     LaunchedEffect(sim) {
@@ -303,6 +313,12 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSetWa
                 Pill("Clear", false, fg, fg2) { sim.post { sim.clear() } }
                 Pill("Save", false, fg, fg2) { onSave(sim) }
                 Pill("Tune", tuneOpen, fg, fg2) { tuneOpen = !tuneOpen }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("MOTION", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(end = 6.dp))
+                Pill("Tilt", settings.tilt, fg, fg2) { settings.tilt = !settings.tilt }
+                Pill("Shake", settings.shake, fg, fg2) { settings.shake = !settings.shake }
             }
 
             if (tuneOpen) {

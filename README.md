@@ -19,6 +19,7 @@ The fluid is a real-time simulation running on the GPU, so the motion is compute
 - Eleven styles: Porcelain, Sumi, Tide, Abyss, Crema, Incense, Aurora, Blush, Ember, Orchid, Moonstone.
 - Tuning per style: weight, swirl, linger, drop size, flow, light, glow, caustics.
 - Optional drifting drops, and a new drop each time the screen wakes.
+- Optional motion effects, both off by default: tilt the phone and the ink flows downhill, shake it to stir the liquid.
 - Save the current frame as a full-resolution PNG to the gallery.
 - No network access, accounts, ads or analytics.
 
@@ -54,6 +55,7 @@ app/src/main/java/com/kodalibhargav/inkwell/
   InkWallpaperService.kt wallpaper engine and EGL render thread
   MainActivity.kt        settings screen with live preview (Compose)
   InkCapture.kt          saving frames to the gallery
+  MotionSource.kt        accelerometer input for tilt and shake
 docs/                    store listing, privacy policy, release notes
 ```
 
@@ -62,6 +64,8 @@ docs/                    store listing, privacy policy, release notes
 The simulation follows the stable-fluids method. Each frame the velocity field is advected, given buoyancy from the ink density, vorticity-confined, made divergence-free with a pressure solve, and then used to advect the dye. Dye is stored in a texture with colour in the RGB channels and density in alpha, so heavy ink sinks and light ink rises according to the style.
 
 The display shader turns the dye into the final image. Styles use one of three modes: ink darkens a pale liquid, ink glows in a dark liquid, or pale ink clouds a dark liquid.
+
+Tilt and shake use the accelerometer. A slow low-pass filter separates gravity from sudden movement. Gravity gives the downhill direction on the screen, which is added as a force on the ink, so tilting the phone makes the dye flow toward the lower side. What remains after the filter is the shake: when it passes a threshold, a few strong velocity impulses and new drops are added. The sensor is registered only while the wallpaper is visible and at least one of the two options is on.
 
 The wallpaper engine runs its own EGL context on a render thread. Rendering pauses when the wallpaper is not visible and drops to a lower frame rate once nothing has been touched for a few seconds.
 
