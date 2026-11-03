@@ -43,7 +43,6 @@ app/src/main/java/com/kodalibhargav/inkwell/
   MainActivity.kt        settings screen with live preview (Compose)
   InkCapture.kt          saving frames to the gallery
 docs/                    store listing, privacy policy, release notes
-Inkwell Glass.html       original WebGL prototype
 ```
 
 ## How it works

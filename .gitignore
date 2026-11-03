@@ -15,3 +15,6 @@ keystore.properties
 
 # Android Studio project files (regenerated on import)
 /.idea/
+
+# original web prototype, kept locally only
+Inkwell Glass.html
