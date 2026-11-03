@@ -70,3 +70,7 @@ The wallpaper engine runs its own EGL context on a render thread. Rendering paus
 - Touch input on the home screen depends on the launcher forwarding touch events to the wallpaper. Some launchers do not forward holds or drags.
 - The application ID is `com.kodalibhargav.inkwell`.
 - Privacy policy: [docs/privacy-policy.md](docs/privacy-policy.md)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
