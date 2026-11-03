@@ -4,6 +4,10 @@ Inkwell is an Android live wallpaper that simulates ink dropped into liquid. Tou
 
 The fluid is a real-time simulation running on the GPU, so the motion is computed, not played back from a video.
 
+<p align="center">
+  <img src="docs/images/hero.webp" alt="Inkwell in Porcelain, Abyss and Crema" width="720">
+</p>
+
 ## Features
 
 - Tap for a single drop, hold for a thin steady thread, drag to stir the liquid without adding ink.
@@ -13,6 +17,12 @@ The fluid is a real-time simulation running on the GPU, so the motion is compute
 - Optional drifting drops, and a new drop each time the screen wakes.
 - Save the current frame as a full-resolution PNG to the gallery.
 - No network access, accounts, ads or analytics.
+
+<p align="center">
+  <img src="docs/images/styles.webp" alt="Porcelain, Sumi, Tide, Abyss, Crema, Incense and Aurora">
+</p>
+
+<p align="center"><sub>Frames from the simulation. Left to right: Porcelain, Sumi, Tide, Abyss, Crema, Incense, Aurora.</sub></p>
 
 ## Requirements
 
