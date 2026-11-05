@@ -101,44 +101,45 @@ class InkSettings private constructor(context: Context) {
 
     val listeners = CopyOnWriteArrayList<() -> Unit>()
 
-    private val onChange = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+    /**
+     * Writes the change and tells listeners directly. Preference-change listeners are held weakly by
+     * Android, and a release build can drop the field that kept ours alive, so they cannot be relied on.
+     */
+    private fun SharedPreferences.Editor.save() {
+        apply()
         version++
         listeners.forEach { it() }
-    }
-
-    init {
-        sp.registerOnSharedPreferenceChangeListener(onChange)
     }
 
     var styleIdx: Int
         get() = sp.getInt("style", 0).coerceIn(0, STYLES.lastIndex)
         set(v) {
             val i = (v + STYLES.size) % STYLES.size
-            if (i != styleIdx) sp.edit().putInt("style", i).putInt("ink", 0).apply()
+            if (i != styleIdx) sp.edit().putInt("style", i).putInt("ink", 0).save()
         }
 
     var inkIdx: Int
         get() = sp.getInt("ink", 0).coerceIn(0, STYLES[styleIdx].inks.lastIndex)
-        set(v) = sp.edit().putInt("ink", v).apply()
+        set(v) = sp.edit().putInt("ink", v).save()
 
     /** Index into [FORMS]; shared by every style. */
     var form: Int
         get() = sp.getInt("form", 0).coerceIn(0, FORMS.lastIndex)
-        set(v) = sp.edit().putInt("form", v).apply()
+        set(v) = sp.edit().putInt("form", v).save()
 
     /** Tilt the phone and the ink flows downhill. Off by default; uses the accelerometer only while visible. */
     var tilt: Boolean
         get() = sp.getBoolean("tilt", false)
-        set(v) = sp.edit().putBoolean("tilt", v).apply()
+        set(v) = sp.edit().putBoolean("tilt", v).save()
 
     /** Shake the phone to stir the liquid and add drops. */
     var shake: Boolean
         get() = sp.getBoolean("shake", false)
-        set(v) = sp.edit().putBoolean("shake", v).apply()
+        set(v) = sp.edit().putBoolean("shake", v).save()
 
     var rain: Boolean
         get() = sp.getBoolean("rain", true)
-        set(v) = sp.edit().putBoolean("rain", v).apply()
+        set(v) = sp.edit().putBoolean("rain", v).save()
 
     fun look(): Look {
         val s = STYLES[styleIdx]
@@ -151,14 +152,14 @@ class InkSettings private constructor(context: Context) {
     }
 
     fun setTweak(key: String, v: Float) {
-        sp.edit().putFloat("t_${STYLES[styleIdx].id}_$key", v).apply()
+        sp.edit().putFloat("t_${STYLES[styleIdx].id}_$key", v).save()
     }
 
     fun resetTweaks() {
         val prefix = "t_${STYLES[styleIdx].id}_"
         val e = sp.edit()
         sp.all.keys.filter { it.startsWith(prefix) }.forEach { e.remove(it) }
-        e.apply()
+        e.save()
     }
 
     companion object {

@@ -221,8 +221,9 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
         settings.listeners.add(l)
         onDispose { settings.listeners.remove(l) }
     }
-    @Suppress("UNUSED_EXPRESSION") tick
-    val look = settings.look()
+    // The tick is the key, so reading it here subscribes this composable to settings changes.
+    // A bare, unused read gets removed by R8 in release builds and the UI stops updating.
+    val look = remember(tick) { settings.look() }
     val s = look.s
     val sim = remember { InkSim(settings).also(onSim) }
     var tuneOpen by remember { mutableStateOf(false) }
