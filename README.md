@@ -1,16 +1,10 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="Inkwell logo" width="120">
+  <img src="docs/images/banner.webp" alt="Inkwell: real ink, moving on your home screen" width="100%">
 </p>
-
-<h1 align="center">Inkwell</h1>
 
 Inkwell is an Android live wallpaper that simulates ink dropped into liquid. Touch the screen to add ink, drag to stir it, or leave it alone and new drops arrive on their own.
 
 The fluid is a real-time simulation running on the GPU, so the motion is computed, not played back from a video.
-
-<p align="center">
-  <img src="docs/images/hero.webp" alt="Inkwell in Porcelain, Abyss and Crema" width="720">
-</p>
 
 ## Features
 
