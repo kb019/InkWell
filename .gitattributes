@@ -1,0 +1,12 @@
+# Let Git normalise text files, and pin the files whose line endings matter.
+* text=auto
+
+# The Gradle wrapper script must keep Unix line endings or it fails on Linux and macOS.
+gradlew text eol=lf
+*.bat text eol=crlf
+
+# Never touch binary assets.
+*.png binary
+*.webp binary
+*.jks binary
+*.keystore binary
