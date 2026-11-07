@@ -1,6 +1,6 @@
 # Privacy Policy for Inkwell
 
-_Last updated: 1 November 2026_
+_Last updated: 7 November 2026_
 
 Inkwell is a live wallpaper app. It does not collect, store, share or sell any personal data.
 
@@ -16,7 +16,12 @@ Inkwell is a live wallpaper app. It does not collect, store, share or sell any p
 - It does not access your photos, contacts, location, microphone or camera.
 
 **Children**
-The app does not knowingly collect information from anyone, including children.
+Inkwell can be used by children. Because the app collects no personal information from anyone, including children:
+- It has no ads, accounts, analytics or tracking.
+- It has no internet access and no links that lead out of the app.
+- It does not share anything with third parties, because it collects nothing.
+
+Parents and guardians who have questions can contact us at the address below.
 
 **Changes**
 If this policy changes, the updated version will be posted at the same address with a new date.
