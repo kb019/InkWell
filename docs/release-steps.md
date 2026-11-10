@@ -22,3 +22,28 @@
    New personal accounts must run a closed test with 12+ testers for 14 days first.
 
 5. For each update, raise versionCode in app/build.gradle.kts.
+
+## Automated GitHub releases
+
+`.github/workflows/release.yml` builds and attaches the signed files for you.
+
+How it works:
+1. Merge pull requests into `main` using `feat:` and `fix:` commit messages.
+2. A bot keeps a "release PR" open with the next version and a changelog.
+3. Merging the release PR creates the tag (for example `v1.0.1`) and a GitHub Release.
+4. The workflow then builds the APK and AAB with your key and attaches them, plus `SHA256SUMS.txt`.
+
+One-time setup:
+- Repo Settings > Actions > General > Workflow permissions: tick "Allow GitHub Actions to create and approve pull requests".
+- Repo Settings > Secrets and variables > Actions > New repository secret, four secrets:
+  - `KEYSTORE_BASE64`: the key file encoded as one line of text.
+    Git Bash: `base64 -w0 inkwell-upload.jks`   PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("inkwell-upload.jks"))`
+  - `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`: the same values as in `keystore.properties`.
+- After the first release (v1.0.0) is published, delete the `"release-as": "1.0.0"` line from
+  `release-please-config.json` so later versions follow the commit messages.
+
+Notes:
+- Without the secrets, the workflow still runs but attaches unsigned files, which cannot be installed.
+- The version lives in one place, `appVersion` in `app/build.gradle.kts`; the bot updates it and
+  `versionCode` is derived from it (1.2.3 gives 10203).
+- Uploading to Google Play stays manual: download the `.aab` from the release and upload it in the Play Console.

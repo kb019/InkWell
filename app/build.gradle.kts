@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Single source of truth for the version. release-please rewrites the annotated line on each release.
+val appVersion = "1.0.0" // x-release-please-version
+val versionParts = appVersion.split(".").map { it.toInt() }
+
 android {
     namespace = "com.kodalibhargav.inkwell"
     compileSdk {
@@ -15,8 +19,9 @@ android {
         applicationId = "com.kodalibhargav.inkwell"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        // 1.2.3 -> 10203; always increases with the version, as Play and F-Droid require
+        versionCode = versionParts[0] * 10_000 + versionParts[1] * 100 + versionParts[2]
+        versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

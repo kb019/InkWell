@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "inkwell",
+      "include-component-in-tag": false,
+      "release-as": "1.0.0",
+      "extra-files": ["app/build.gradle.kts"]
+    }
+  }
+}
