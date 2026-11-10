@@ -1,0 +1,26 @@
+Categories:
+  - Graphics
+  - Theming
+License: MIT
+WebSite: https://github.com/kb019/InkWell
+SourceCode: https://github.com/kb019/InkWell
+IssueTracker: https://github.com/kb019/InkWell/issues
+Changelog: https://github.com/kb019/InkWell/releases
+
+AutoName: Inkwell
+
+RepoType: git
+Repo: https://github.com/kb019/InkWell.git
+
+Builds:
+  - versionName: 1.0.1
+    versionCode: 10001
+    commit: v1.0.1
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.1
+CurrentVersionCode: 10001

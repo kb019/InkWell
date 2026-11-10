@@ -1,0 +1,29 @@
+Inkwell is a live wallpaper that simulates ink dropped into liquid. Touch the screen and ink falls, blooms and unfurls, then drifts and settles on its own. The fluid is a real-time simulation running on the GPU, so no two moments are the same.
+
+<b>Interaction</b>
+<ul>
+<li>Tap for a single drop of ink</li>
+<li>Hold for a thin, steady thread</li>
+<li>Drag to stir the liquid without adding ink</li>
+<li>Optional drifting drops, and a new drop each time the screen wakes</li>
+</ul>
+
+<b>Ink forms</b>
+Swirl, Bloom, Ring, Burst, Thread and Mist. Ring sends up drifting smoke rings, Bloom opens soft round clouds, Thread unrolls long ribbons and Mist scatters a fine vapor.
+
+<b>Themes</b>
+Eleven themes: Porcelain, Sumi, Tide, Abyss, Crema, Incense, Aurora, Blush, Ember, Orchid and Moonstone. Each has its own named inks.
+
+<b>Customisation</b>
+<ul>
+<li>Tune weight, swirl, linger, drop size and flow</li>
+<li>Switch light, glow and caustics on or off</li>
+<li>Optional tilt and shake effects, both off by default</li>
+<li>Save the current frame to the gallery as a full-resolution image</li>
+</ul>
+
+<b>Privacy</b>
+No ads, no accounts, no analytics and no internet access. The optional motion sensor is only read while the wallpaper is visible and is never stored or sent anywhere.
+
+<b>Requirements</b>
+Android 8.0 or newer and a GPU that can render to half-float textures (OpenGL ES 3.0, or ES 2.0 with the half-float colour buffer extension). On other devices the app shows a message and cannot set the wallpaper. Touch interaction on the home screen depends on your launcher.

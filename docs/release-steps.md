@@ -47,3 +47,26 @@ Notes:
 - The version lives in one place, `appVersion` in `app/build.gradle.kts`; the bot updates it and
   `versionCode` is derived from it (1.2.3 gives 10203).
 - Uploading to Google Play stays manual: download the `.aab` from the release and upload it in the Play Console.
+
+## Submitting to F-Droid
+
+F-Droid builds the app itself from the tagged source and signs it with its own key, so it needs no APK from you.
+What it reads from this repository:
+- `fastlane/metadata/android/en-US/`: title, descriptions, icon, feature graphic and the changelog named after the versionCode
+  (for 1.0.0 that is `changelogs/10000.txt`). Add phone screenshots as `images/phoneScreenshots/1.png`, `2.png`, ...
+- The tag for each release (`v1.0.0`), created by the release workflow.
+
+Steps:
+1. Make the repository public (F-Droid must be able to clone it). Submit only after the release that contains the F-Droid
+   build settings exists, so the tag `v1.0.1` (or later) must be on GitHub; `v1.0.0` was created before them.
+   Update the version, versionCode and commit in the recipe to match the tag you submit.
+2. Create an account on gitlab.com and fork `https://gitlab.com/fdroid/fdroiddata`.
+3. In your fork, add `metadata/com.kodalibhargav.inkwell.yml`, copied from `docs/fdroid/com.kodalibhargav.inkwell.yml`.
+4. Open a merge request to `fdroid/fdroiddata` using their checklist (they run an automated build and a lint pass). Answer reviewer comments.
+5. After it is merged, the app appears in the F-Droid repository after their next build and publish cycle.
+
+Notes:
+- F-Droid-built installs carry F-Droid's signature, so they cannot update over a Play or GitHub install. Users must uninstall first.
+- The versionCode is computed from the version in `app/build.gradle.kts` (1.2.3 gives 10203). If their update checker cannot read that,
+  reviewers may ask for a literal value in the recipe for each release.
+- F-Droid does not support in-app purchases, so a paid unlock would have to stay out of the F-Droid build.

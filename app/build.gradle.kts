@@ -55,6 +55,12 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // F-Droid does not accept the encrypted dependency metadata block that AGP adds by default.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 dependencies {
