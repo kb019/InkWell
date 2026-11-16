@@ -4,7 +4,7 @@ package com.kodalibhargav.inkwell
  * The policies shown under Settings, so they can be read without a network connection.
  * Keep them in sync with docs/privacy-policy.md and docs/terms-of-service.md.
  */
-const val SUPPORT_EMAIL = "kodalibhargav019@gmail.com"
+const val SUPPORT_EMAIL = "jelu.labs.apps@gmail.com"
 
 val PRIVACY_POLICY = """
 Last updated: 7 November 2026

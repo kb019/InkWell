@@ -27,4 +27,4 @@ Parents and guardians who have questions can contact us at the address below.
 If this policy changes, the updated version will be posted at the same address with a new date.
 
 **Contact**
-Questions: kodalibhargav019@gmail.com
+Questions: jelu.labs.apps@gmail.com

@@ -33,4 +33,4 @@ Inkwell can be used by children. Parents and guardians are responsible for super
 These terms may change. The updated version will be shown in the app with a new date.
 
 **Contact**
-Questions: kodalibhargav019@gmail.com
+Questions: jelu.labs.apps@gmail.com
