@@ -1,5 +1,9 @@
 package com.kodalibhargav.inkwell
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -8,6 +12,7 @@ import android.opengl.EGLSurface
 import android.service.wallpaper.WallpaperService
 import android.view.MotionEvent
 import android.view.SurfaceHolder
+import androidx.core.content.ContextCompat
 
 class InkWallpaperService : WallpaperService() {
 
@@ -20,11 +25,23 @@ class InkWallpaperService : WallpaperService() {
         private lateinit var motion: MotionSource
         private val onSettings = { motion.update() }
 
+        // Follow the phone's light/dark mode while the wallpaper is running.
+        private val configReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                InkSettings.get(applicationContext).setSystemNight(isNightMode(this@InkWallpaperService))
+            }
+        }
+
         override fun onCreate(surfaceHolder: SurfaceHolder) {
             super.onCreate(surfaceHolder)
             sim = InkSim(InkSettings.get(applicationContext))
             motion = MotionSource(applicationContext, sim, InkSettings.get(applicationContext))
             InkSettings.get(applicationContext).listeners.add(onSettings)
+            InkSettings.get(applicationContext).setSystemNight(isNightMode(this@InkWallpaperService))
+            ContextCompat.registerReceiver(
+                this@InkWallpaperService, configReceiver, IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
             setTouchEventsEnabled(true)
         }
 
@@ -51,6 +68,7 @@ class InkWallpaperService : WallpaperService() {
             this.visible = visible
             thread?.setPaused(!visible)
             motion.setVisible(visible)
+            if (visible) InkSettings.get(applicationContext).setSystemNight(isNightMode(this@InkWallpaperService))
             if (visible) sim.post { sim.sampleDrop() } // a fresh drop each time the screen wakes
         }
 
@@ -66,6 +84,10 @@ class InkWallpaperService : WallpaperService() {
 
         override fun onDestroy() {
             InkSettings.get(applicationContext).listeners.remove(onSettings)
+            try {
+                unregisterReceiver(configReceiver)
+            } catch (_: Exception) {
+            }
             motion.setVisible(false)
             thread?.finish()
             thread = null

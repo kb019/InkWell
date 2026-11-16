@@ -15,6 +15,8 @@ The fluid is a real-time simulation running on the GPU, so the motion is compute
 - Optional drifting drops, and a new drop each time the screen wakes.
 - Optional motion effects, both off by default: tilt the phone and the ink flows downhill, shake it to stir the liquid.
 - Save the current frame as a full-resolution PNG to the gallery.
+- Theme setting: show every style (default), follow the phone's light or dark mode, or use only pale or only dark liquids.
+- Settings sheet with a rate link (Google Play installs only), and the privacy policy and terms of service, readable offline.
 - No network access, accounts, ads or analytics.
 
 <p align="center">
@@ -50,6 +52,7 @@ app/src/main/java/com/kodalibhargav/inkwell/
   MainActivity.kt        settings screen with live preview (Compose)
   InkCapture.kt          saving frames to the gallery
   MotionSource.kt        accelerometer input for tilt and shake
+  LegalText.kt           privacy policy and terms shown in Settings
 docs/                    store listing, privacy policy, release notes
 ```
 
@@ -68,6 +71,7 @@ The wallpaper engine runs its own EGL context on a render thread. Rendering paus
 - Touch input on the home screen depends on the launcher forwarding touch events to the wallpaper. Some launchers do not forward holds or drags.
 - The application ID is `com.kodalibhargav.inkwell`.
 - Privacy policy: [docs/privacy-policy.md](docs/privacy-policy.md)
+- Terms of service: [docs/terms-of-service.md](docs/terms-of-service.md)
 
 ## License
 
