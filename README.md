@@ -12,11 +12,12 @@ The fluid is a real-time simulation running on the GPU, so the motion is compute
 - Six ink forms: Swirl, Bloom, Ring, Burst, Thread, Mist.
 - Eleven styles: Porcelain, Sumi, Tide, Abyss, Crema, Incense, Aurora, Blush, Ember, Orchid, Moonstone.
 - Tuning per style: weight, swirl, linger, drop size, flow, light, glow, caustics.
+- Ink strength, liquid brightness and tint, and how often new drops drift in.
 - Optional drifting drops, and a new drop each time the screen wakes.
 - Optional motion effects, both off by default: tilt the phone and the ink flows downhill, shake it to stir the liquid.
 - Save the current frame as a full-resolution PNG to the gallery.
 - Theme setting: show every style (default), follow the phone's light or dark mode, or use only pale or only dark liquids.
-- Settings sheet with a rate link (Google Play installs only), and the privacy policy and terms of service, readable offline.
+- Settings sheet with a rate-and-feedback link that opens the Google Play page (Google Play installs) or an email draft (other installs), and the privacy policy and terms of service, readable offline.
 - No network access, accounts, ads or analytics.
 
 <p align="center">

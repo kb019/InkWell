@@ -105,6 +105,29 @@ class MainActivity : ComponentActivity() {
         capture(sim)
     }
 
+    /**
+     * Opens the user's email app with a message to the support address. The version and device are written
+     * into the body where the user can read, edit or delete them before sending. The app itself sends nothing,
+     * so it still needs no network permission.
+     */
+    private fun sendFeedback() {
+        val version = try {
+            packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+        val body = "\n\n\n---\nApp: Inkwell $version\nAndroid: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\nDevice: ${Build.MANUFACTURER} ${Build.MODEL}\n"
+        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+            .putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
+            .putExtra(Intent.EXTRA_SUBJECT, "Inkwell feedback")
+            .putExtra(Intent.EXTRA_TEXT, body)
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            toast("No email app found. You can write to $SUPPORT_EMAIL")
+        }
+    }
+
     /** Opens this app's Play Store page so the user can leave a rating. No library or network permission needed. */
     private fun rateApp() {
         val id = packageName
@@ -156,7 +179,7 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 onSetWallpaper = { setWallpaper(this) }, onSave = ::saveImage,
-                onRate = ::rateApp, showRate = canRate())
+                onRate = ::rateApp, showRate = canRate(), onFeedback = ::sendFeedback)
         }
     }
 
@@ -234,18 +257,26 @@ private val TUNE = listOf(
     Triple("linger", "Linger", 0f..1f),
     Triple("size", "Drop size", .4f..2f),
     Triple("speed", "Flow", .15f..1f),
+    Triple("strength", "Ink strength", .4f..1.6f),
+    Triple("bright", "Liquid brightness", -1f..1f),
+    Triple("tint", "Liquid tint", -1f..1f),
+    Triple("rainRate", "Rain rate", .3f..3f),
 )
 
 private fun fmt(key: String, v: Float) = when (key) {
     "weight" -> if (v < -.05f) "Rises" else if (v > .05f) "Sinks" else "Floats"
     "curl" -> "${(v / 40 * 100).toInt()}"
     "size" -> "%.2f×".format(v)
+    "strength" -> "${(v * 100).toInt()}%"
+    "bright" -> "%+d".format((v * 100).toInt())
+    "tint" -> "%+d°".format((v * 60).toInt())
+    "rainRate" -> "%.1f×".format(v)
     else -> "${(v * 100).toInt()}"
 }
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: (InkSim) -> Unit, onSetWallpaper: () -> Unit, onSave: (InkSim) -> Unit, onRate: () -> Unit, showRate: Boolean) {
+private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: (InkSim) -> Unit, onSetWallpaper: () -> Unit, onSave: (InkSim) -> Unit, onRate: () -> Unit, showRate: Boolean, onFeedback: () -> Unit) {
     var tick by remember { mutableIntStateOf(0) }
     DisposableEffect(settings) {
         val l = { tick++; Unit }
@@ -377,18 +408,10 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
                     for ((key, label, range) in TUNE) {
                         val v = when (key) {
                             "weight" -> look.weight; "curl" -> look.curl; "linger" -> look.linger
-                            "size" -> look.size; else -> look.speed
+                            "size" -> look.size; "strength" -> look.strength; "bright" -> look.bright
+                            "tint" -> look.tint; "rainRate" -> look.rainRate; else -> look.speed
                         }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(label.uppercase(), color = fg, fontSize = 11.sp, letterSpacing = 1.4.sp)
-                            Text(fmt(key, v), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
-                        }
-                        Slider(
-                            value = v, onValueChange = { settings.setTweak(key, it) }, valueRange = range,
-                            colors = SliderDefaults.colors(
-                                thumbColor = fg, activeTrackColor = fg, inactiveTrackColor = fg.copy(alpha = .16f),
-                            ),
-                        )
+                        TuneSlider(label, fmt(key, v), v, range, fg, fg2) { settings.setTweak(key, it) }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Pill("Light", look.shade, fg, fg2) { settings.setTweak("shade", if (look.shade) 0f else 1f) }
@@ -419,7 +442,10 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
                         },
                         color = fg2, fontSize = 12.sp,
                     )
-                    if (showRate) SettingsLink("Rate Inkwell", fg, onRate)
+                    // Google Play installs go to the store page, where reviews and developer replies live.
+                    // Other installs (F-Droid, downloaded APK) have no Play page, so they use email.
+                    if (showRate) SettingsLink("Rate & give feedback", fg, onRate)
+                    else SettingsLink("Send feedback", fg, onFeedback)
                     SettingsLink("Privacy policy", fg) { legal = "Privacy policy" to PRIVACY_POLICY }
                     SettingsLink("Terms of service", fg) { legal = "Terms of service" to TERMS_OF_SERVICE }
                     Text("VERSION $versionName", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
@@ -444,6 +470,21 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
             text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(body, fontSize = 14.sp) } },
         )
     }
+}
+
+@Composable
+private fun TuneSlider(
+    label: String, valueText: String, v: Float, range: ClosedFloatingPointRange<Float>,
+    fg: Color, fg2: Color, onChange: (Float) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label.uppercase(), color = fg, fontSize = 11.sp, letterSpacing = 1.4.sp)
+        Text(valueText, color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
+    }
+    Slider(
+        value = v, onValueChange = onChange, valueRange = range,
+        colors = SliderDefaults.colors(thumbColor = fg, activeTrackColor = fg, inactiveTrackColor = fg.copy(alpha = .16f)),
+    )
 }
 
 @Composable

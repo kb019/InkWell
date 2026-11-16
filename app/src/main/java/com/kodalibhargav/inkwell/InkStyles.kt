@@ -98,6 +98,13 @@ class Look(
     val shade: Boolean,
     val glow: Boolean,
     val caustic: Boolean,
+    /** How much ink each drop deposits (1 = normal). */
+    val strength: Float,
+    /** Liquid brightness and tint, each -1..1 (0 = the style's own liquid). */
+    val bright: Float,
+    val tint: Float,
+    /** How often new drops drift in (1 = normal). */
+    val rainRate: Float,
 )
 
 /** Shared by the wallpaper service and the settings preview; both run in the same process. */
@@ -205,6 +212,7 @@ class InkSettings private constructor(context: Context) {
         return Look(
             s, f("weight", s.weight), f("curl", s.curl), f("linger", s.linger), f("size", s.size), f("speed", s.speed),
             b("shade", s.shade), b("glow", s.glow), b("caustic", s.caustic),
+            f("strength", 1f), f("bright", 0f), f("tint", 0f), f("rainRate", 1f),
         )
     }
 
