@@ -15,7 +15,7 @@ The fluid is a real-time simulation running on the GPU, so the motion is compute
 - Optional drifting drops, and a new drop each time the screen wakes.
 - Optional motion effects, both off by default: tilt the phone and the ink flows downhill, shake it to stir the liquid.
 - Save the current frame as a full-resolution PNG to the gallery.
-- Theme setting: follow the phone's light or dark mode, or always use pale or dark liquids.
+- Theme setting: show every style (default), follow the phone's light or dark mode, or use only pale or only dark liquids.
 - Settings sheet with a rate link (Google Play installs only), and the privacy policy and terms of service, readable offline.
 - No network access, accounts, ads or analytics.
 

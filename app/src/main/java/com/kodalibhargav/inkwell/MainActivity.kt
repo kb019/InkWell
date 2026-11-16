@@ -315,7 +315,7 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    val pool = STYLES.indices.filter { STYLES[it].dark == s.dark }
+                    val pool = settings.stylePool()
                     Text("%02d / %02d".format(pool.indexOf(STYLES.indexOf(s)) + 1, pool.size), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
                     Text(s.name, color = fg, fontSize = 24.sp, fontWeight = FontWeight.Light)
                 }
@@ -406,15 +406,16 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
                 ) {
                     Text("THEME", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("System", "Light", "Dark").forEachIndexed { i, name ->
+                        listOf("All", "System", "Light", "Dark").forEachIndexed { i, name ->
                             Pill(name, settings.theme == i, fg, fg2) { settings.theme = i }
                         }
                     }
                     Text(
                         when (settings.theme) {
-                            THEME_LIGHT -> "Always a pale liquid."
-                            THEME_DARK -> "Always a dark liquid."
-                            else -> "Follows your phone's light or dark mode."
+                            THEME_LIGHT -> "Only pale liquids."
+                            THEME_DARK -> "Only dark liquids."
+                            THEME_SYSTEM -> "Follows your phone's light or dark mode."
+                            else -> "Shows every style."
                         },
                         color = fg2, fontSize = 12.sp,
                     )

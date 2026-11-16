@@ -78,10 +78,11 @@ val FORMS = listOf(
     InkForm("Mist", .45f, .3f),
 )
 
-/** Theme choices: follow the phone's light or dark mode, or always use pale or dark liquids. */
-const val THEME_SYSTEM = 0
-const val THEME_LIGHT = 1
-const val THEME_DARK = 2
+/** Theme choices: every style, follow the phone's light or dark mode, or only pale or only dark liquids. */
+const val THEME_ALL = 0
+const val THEME_SYSTEM = 1
+const val THEME_LIGHT = 2
+const val THEME_DARK = 3
 
 fun isNightMode(context: Context): Boolean =
     (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -120,9 +121,9 @@ class InkSettings private constructor(context: Context) {
         listeners.forEach { it() }
     }
 
-    /** THEME_SYSTEM, THEME_LIGHT or THEME_DARK. */
+    /** THEME_ALL (default), THEME_SYSTEM, THEME_LIGHT or THEME_DARK. */
     var theme: Int
-        get() = sp.getInt("theme", THEME_SYSTEM).coerceIn(THEME_SYSTEM, THEME_DARK)
+        get() = sp.getInt("theme", THEME_ALL).coerceIn(THEME_ALL, THEME_DARK)
         set(v) = sp.edit().putInt("theme", v).save()
 
     /** The device's night mode, reported by whichever host is showing the ink (the app or the wallpaper). */
@@ -153,15 +154,20 @@ class InkSettings private constructor(context: Context) {
         get() {
             val chosen = sp.getInt("style", 0).coerceIn(0, STYLES.lastIndex)
             return when (theme) {
+                THEME_ALL -> chosen
                 THEME_LIGHT -> if (!STYLES[chosen].dark) chosen else lastLight()
                 THEME_DARK -> if (STYLES[chosen].dark) chosen else lastDark()
                 else -> if (systemNight) lastDark() else lastLight()
             }
         }
 
-    /** Moves to the next or previous style of the kind the current theme allows. */
+    /** The styles the arrows cycle through: all of them, or only the kind the theme allows. */
+    fun stylePool(): List<Int> =
+        if (theme == THEME_ALL) STYLES.indices.toList() else STYLES.indices.filter { STYLES[it].dark == wantsDark }
+
+    /** Moves to the next or previous style the current theme allows. */
     fun stepStyle(delta: Int) {
-        val pool = STYLES.indices.filter { STYLES[it].dark == wantsDark }
+        val pool = stylePool()
         val pos = pool.indexOf(styleIdx).coerceAtLeast(0)
         val i = pool[(pos + delta + pool.size) % pool.size]
         val e = sp.edit().putInt("style", i).putInt("ink", 0)
