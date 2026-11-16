@@ -16,6 +16,8 @@ What the app does on your device
 • It saves your choices (selected style, ink colour and settings) on your device only.
 • If you turn on Tilt or Shake, it reads the motion sensor on your device to move the ink. This is off by default, only runs while the wallpaper is visible, and the readings are never stored or sent anywhere.
 • When you tap Save, it writes one image of the ink to your gallery (Pictures/Inkwell). It does not read your photos.
+• If you tap Rate & give feedback, the Google Play page for Inkwell opens in the Play Store app, which is governed by Google's own privacy policy.
+• If you tap Send feedback (shown when Inkwell was not installed from Google Play), your email app opens with a draft addressed to us. The draft lists your app version, Android version and device model. You can edit or delete it before sending, and the app itself sends nothing.
 
 What the app does not do
 • It does not connect to the internet.

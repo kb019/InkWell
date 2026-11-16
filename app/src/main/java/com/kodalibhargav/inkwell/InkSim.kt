@@ -349,6 +349,17 @@ void main(){
         return Color.rgb((f(0) * 255).roundToInt(), (f(8) * 255).roundToInt(), (f(4) * 255).roundToInt())
     }
 
+    /** Shifts the liquid's colour: [tint] turns the hue (and adds a little colour to neutral liquids), [bright] lightens or darkens. */
+    private fun tone(c: Int, bright: Float, tint: Float): Int {
+        if (bright == 0f && tint == 0f) return c
+        val hsv = FloatArray(3)
+        Color.colorToHSV(c, hsv)
+        hsv[0] = (hsv[0] + tint * 60f + 360f) % 360f
+        hsv[1] = (hsv[1] + kotlin.math.abs(tint) * .25f).coerceIn(0f, 1f)
+        hsv[2] = (hsv[2] + bright * .35f).coerceIn(0f, 1f)
+        return Color.HSVToColor(hsv)
+    }
+
     private fun pickColor(i: Int): Int {
         val s = look!!.s
         if (s.prism) {
@@ -363,7 +374,7 @@ void main(){
         val dir = if (l.weight < 0) 1f else -1f
         val k = l.size * size
         val at = now() + delay
-        val amt = if (l.s.mode == 0) 1f else .7f
+        val amt = (if (l.s.mode == 0) 1f else .7f) * l.strength
         val asp = if (H > 0) W.toFloat() / H else .5f
         fun rnd() = Math.random().toFloat()
         fun ink(after: Long, px: Float, py: Float, dx: Float, dy: Float, strength: Float, r: Float) {
@@ -507,7 +518,7 @@ void main(){
         val dir = if (l.weight < 0) 1f else -1f
         splats.add(
             Splat(0, g.sx + (Math.random().toFloat() - .5f) * .003f, g.sy, 0f, 150 * dir,
-                inkColor(g.color, .32f * l.size * (if (l.s.mode == 0) 1f else .7f)), .00025f * l.size),
+                inkColor(g.color, .32f * l.size * (if (l.s.mode == 0) 1f else .7f) * l.strength), .00025f * l.size),
         )
     }
 
@@ -599,8 +610,8 @@ void main(){
         val p = progs["display"]!!
         p.use()
         p.i("uTexture", dye.read.attach(0))
-        val top = lin(Color.parseColor(l.s.top))
-        val bot = lin(Color.parseColor(l.s.bottom))
+        val top = lin(tone(Color.parseColor(l.s.top), l.bright, l.tint))
+        val bot = lin(tone(Color.parseColor(l.s.bottom), l.bright, l.tint))
         p.f3("top", top[0], top[1], top[2]); p.f3("bot", bot[0], bot[1], bot[2])
         p.f("uMode", l.s.mode.toFloat()); p.f("time", simT)
         p.f("uShade", if (l.shade) 1f else 0f); p.f("uGlow", if (l.glow) 1f else 0f); p.f("uCaustic", if (l.caustic) 1f else 0f)
@@ -651,7 +662,7 @@ void main(){
         pourStep(t)
         if (settings.rain && t > nextDrift) {
             driftDrop()
-            nextDrift = t + 5500 + (Math.random() * 4000).toLong()
+            nextDrift = t + ((5500 + Math.random() * 4000) / l.rainRate).toLong()
         }
 
         val form = FORMS[settings.form]
