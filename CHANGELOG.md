@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/kb019/InkWell/compare/v1.1.0...v1.2.0) (2026-11-16)
+
+
+### Features
+
+* feedback link and more tuning controls ([90194d8](https://github.com/kb019/InkWell/commit/90194d820079ba0a11cbb5c329fa75737f76b066))
+* feedback link and more tuning controls ([dc38cf8](https://github.com/kb019/InkWell/commit/dc38cf8e06a51b96f9d686c63f28ff6c90e5b74e))
+
 ## [1.1.0](https://github.com/kb019/InkWell/compare/v1.0.0...v1.1.0) (2026-11-16)
 
 
