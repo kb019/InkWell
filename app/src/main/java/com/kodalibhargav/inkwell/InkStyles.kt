@@ -2,6 +2,7 @@ package com.kodalibhargav.inkwell
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -77,6 +78,14 @@ val FORMS = listOf(
     InkForm("Mist", .45f, .3f),
 )
 
+/** Theme choices: follow the phone's light or dark mode, or always use pale or dark liquids. */
+const val THEME_SYSTEM = 0
+const val THEME_LIGHT = 1
+const val THEME_DARK = 2
+
+fun isNightMode(context: Context): Boolean =
+    (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
 /** A style with the user's tweaks applied. */
 class Look(
     val s: InkStyle,
@@ -111,12 +120,54 @@ class InkSettings private constructor(context: Context) {
         listeners.forEach { it() }
     }
 
-    var styleIdx: Int
-        get() = sp.getInt("style", 0).coerceIn(0, STYLES.lastIndex)
-        set(v) {
-            val i = (v + STYLES.size) % STYLES.size
-            if (i != styleIdx) sp.edit().putInt("style", i).putInt("ink", 0).save()
+    /** THEME_SYSTEM, THEME_LIGHT or THEME_DARK. */
+    var theme: Int
+        get() = sp.getInt("theme", THEME_SYSTEM).coerceIn(THEME_SYSTEM, THEME_DARK)
+        set(v) = sp.edit().putInt("theme", v).save()
+
+    /** The device's night mode, reported by whichever host is showing the ink (the app or the wallpaper). */
+    @Volatile
+    var systemNight = false
+        private set
+
+    fun setSystemNight(night: Boolean) {
+        if (night == systemNight) return
+        systemNight = night
+        version++
+        listeners.forEach { it() }
+    }
+
+    private fun lastLight() = sp.getInt("lastLight", STYLES.indexOfFirst { !it.dark }).coerceIn(0, STYLES.lastIndex)
+    private fun lastDark() = sp.getInt("lastDark", STYLES.indexOfFirst { it.dark }).coerceIn(0, STYLES.lastIndex)
+
+    /** True when the wallpaper should use a dark liquid under the current theme. */
+    val wantsDark: Boolean
+        get() = when (theme) {
+            THEME_LIGHT -> false
+            THEME_DARK -> true
+            else -> systemNight
         }
+
+    /** The style actually showing: the chosen one, unless the theme asks for the other kind of liquid. */
+    val styleIdx: Int
+        get() {
+            val chosen = sp.getInt("style", 0).coerceIn(0, STYLES.lastIndex)
+            return when (theme) {
+                THEME_LIGHT -> if (!STYLES[chosen].dark) chosen else lastLight()
+                THEME_DARK -> if (STYLES[chosen].dark) chosen else lastDark()
+                else -> if (systemNight) lastDark() else lastLight()
+            }
+        }
+
+    /** Moves to the next or previous style of the kind the current theme allows. */
+    fun stepStyle(delta: Int) {
+        val pool = STYLES.indices.filter { STYLES[it].dark == wantsDark }
+        val pos = pool.indexOf(styleIdx).coerceAtLeast(0)
+        val i = pool[(pos + delta + pool.size) % pool.size]
+        val e = sp.edit().putInt("style", i).putInt("ink", 0)
+        if (STYLES[i].dark) e.putInt("lastDark", i) else e.putInt("lastLight", i)
+        e.save()
+    }
 
     var inkIdx: Int
         get() = sp.getInt("ink", 0).coerceIn(0, STYLES[styleIdx].inks.lastIndex)
