@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.0](https://github.com/kb019/InkWell/compare/v1.0.0...v1.0.0) (2026-11-16)
+
+
+### Features
+
+* settings sheet with theme option, rate link, privacy policy and terms ([d971053](https://github.com/kb019/InkWell/commit/d971053975f3a7caa7a2cac3e1fbf952bf4809a4))
+* settings sheet with theme option, rate link, privacy policy and terms ([3f5fb5c](https://github.com/kb019/InkWell/commit/3f5fb5c53292e065db4e0029ef5080e01c99290c))
+
+
+### Bug Fixes
+
+* add an All theme option and make it the default ([9e332d5](https://github.com/kb019/InkWell/commit/9e332d5bd030d41f29a47e3c7d533f24492781df))
+
 ## [1.0.0](https://github.com/kb019/InkWell/compare/v1.0.0...v1.0.0) (2026-11-10)
 
 
