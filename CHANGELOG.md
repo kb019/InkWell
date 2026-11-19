@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/kb019/InkWell/compare/v1.2.0...v1.2.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* build without the dependency metadata block F-Droid rejects, add F-Droid metadata ([6b96352](https://github.com/kb019/InkWell/commit/6b9635239943da8ce7f83f95e53d95e76c9ba6fe))
+* make gradlew executable and grant commitlint PR read access ([f8e3ac1](https://github.com/kb019/InkWell/commit/f8e3ac11bdfd2c1d35793a99689c8968387fe6b2))
+
 ## [1.2.0](https://github.com/kb019/InkWell/compare/v1.1.0...v1.2.0) (2026-11-16)
 
 
