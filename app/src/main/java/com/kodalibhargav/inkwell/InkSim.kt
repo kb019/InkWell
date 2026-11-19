@@ -11,13 +11,15 @@ import android.util.Log
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
+
+/** True when the device can give us an OpenGL ES 3 context; otherwise we fall back to ES 2 half-float textures. */
+fun supportsEs3(context: Context): Boolean = (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).deviceConfigurationInfo.reqGlEsVersion >= 0x30000
 
 /**
  * Stable-fluids ink simulation with buoyancy, ported from the Inkwell Glass web prototype.
@@ -27,10 +29,6 @@ import kotlin.math.roundToInt
  *
  * Everything except [post] must be called on the GL thread.
  */
-/** True when the device can give us an OpenGL ES 3 context; otherwise we fall back to ES 2 half-float textures. */
-fun supportsEs3(context: Context): Boolean =
-    (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).deviceConfigurationInfo.reqGlEsVersion >= 0x30000
-
 class InkSim(private val settings: InkSettings) {
 
     // ---------------------------------------------------------------- shaders
@@ -84,7 +82,9 @@ void main(){
 
         fun toLin(c: Float) = if (c <= .04045f) c / 12.92f else ((c + .055f) / 1.055f).pow(2.4f)
         fun lin(color: Int) = floatArrayOf(
-            toLin(Color.red(color) / 255f), toLin(Color.green(color) / 255f), toLin(Color.blue(color) / 255f),
+            toLin(Color.red(color) / 255f),
+            toLin(Color.green(color) / 255f),
+            toLin(Color.blue(color) / 255f),
         )
 
         fun now() = System.nanoTime() / 1_000_000
@@ -146,8 +146,11 @@ void main(){
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
-            if (es3) GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES30.GL_RGBA16F, w, h, 0, GLES20.GL_RGBA, GLES30.GL_HALF_FLOAT, null)
-            else GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, w, h, 0, GLES20.GL_RGBA, HALF_FLOAT_OES, null)
+            if (es3) {
+                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES30.GL_RGBA16F, w, h, 0, GLES20.GL_RGBA, GLES30.GL_HALF_FLOAT, null)
+            } else {
+                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, w, h, 0, GLES20.GL_RGBA, HALF_FLOAT_OES, null)
+            }
             val f = IntArray(1)
             GLES20.glGenFramebuffers(1, f, 0)
             fbo = f[0]
@@ -179,11 +182,14 @@ void main(){
         val tx = 1f / w
         val ty = 1f / h
         fun swap() {
-            val t = read; read = write; write = t
+            val t = read
+            read = write
+            write = t
         }
 
         fun delete() {
-            read.delete(); write.delete()
+            read.delete()
+            write.delete()
         }
     }
 
@@ -208,6 +214,7 @@ void main(){
     private var curlF: Fbo? = null
     private var W = 0
     private var H = 0
+
     @Volatile
     private var failed = false
 
@@ -243,7 +250,8 @@ void main(){
     private var smY = 0f
 
     fun setTilt(x: Float, y: Float) {
-        tiltX = x; tiltY = y
+        tiltX = x
+        tiltY = y
     }
 
     /** A shake: big stirs through the liquid and a few fresh drops. Strength is roughly 0..1. */
@@ -252,10 +260,20 @@ void main(){
         lastTouch = now()
         repeat(4) {
             val a = Math.random().toFloat() * 6.283f
-            splats.add(Splat(0, .15f + Math.random().toFloat() * .7f, .2f + Math.random().toFloat() * .6f,
-                kotlin.math.cos(a) * 900f * strength, kotlin.math.sin(a) * 900f * strength, null, .012f))
+            splats.add(
+                Splat(
+                    0,
+                    .15f + Math.random().toFloat() * .7f,
+                    .2f + Math.random().toFloat() * .6f,
+                    kotlin.math.cos(a) * 900f * strength,
+                    kotlin.math.sin(a) * 900f * strength,
+                    null,
+                    .012f,
+                ),
+            )
         }
-        driftDrop(); driftDrop(200)
+        driftDrop()
+        driftDrop(200)
     }
 
     // ---------------------------------------------------------------- lifecycle
@@ -263,8 +281,13 @@ void main(){
     fun create() {
         es3 = (GLES20.glGetString(GLES20.GL_VERSION) ?: "").startsWith("OpenGL ES 3")
         progs.clear()
-        vel = null; dye = null; pres = null; div = null; curlF = null
-        W = 0; H = 0
+        vel = null
+        dye = null
+        pres = null
+        div = null
+        curlF = null
+        W = 0
+        H = 0
         queue.clear()
         failed = false
         try {
@@ -291,15 +314,25 @@ void main(){
     }
 
     fun destroy() {
-        vel?.delete(); dye?.delete(); pres?.delete(); div?.delete(); curlF?.delete()
-        vel = null; dye = null; pres = null; div = null; curlF = null
-        W = 0; H = 0
+        vel?.delete()
+        dye?.delete()
+        pres?.delete()
+        div?.delete()
+        curlF?.delete()
+        vel = null
+        dye = null
+        pres = null
+        div = null
+        curlF = null
+        W = 0
+        H = 0
     }
 
     fun resize(w: Int, h: Int) {
         if (failed || w <= 0 || h <= 0 || (w == W && h == H)) return
         destroy()
-        W = w; H = h
+        W = w
+        H = h
         fun res(r: Float): Pair<Int, Int> {
             var a = W.toFloat() / H
             if (a < 1) a = 1 / a
@@ -335,9 +368,16 @@ void main(){
     private fun inkColor(hex: Int, amt: Float): FloatArray {
         val s = look!!.s
         val c = lin(hex)
-        return if (s.mode == 0) floatArrayOf(
-            -ln(max(c[0], .02f)) * amt, -ln(max(c[1], .02f)) * amt, -ln(max(c[2], .02f)) * amt, 0f,
-        ) else floatArrayOf(c[0] * amt, c[1] * amt, c[2] * amt, amt)
+        return if (s.mode == 0) {
+            floatArrayOf(
+                -ln(max(c[0], .02f)) * amt,
+                -ln(max(c[1], .02f)) * amt,
+                -ln(max(c[2], .02f)) * amt,
+                0f,
+            )
+        } else {
+            floatArrayOf(c[0] * amt, c[1] * amt, c[2] * amt, amt)
+        }
     }
 
     private fun hsl(h: Float, s: Float, l: Float): Int {
@@ -503,7 +543,8 @@ void main(){
         val dy = y - g.ly
         if (!g.moved && hypot(x - g.sx, y - g.sy) > .025f) g.moved = true
         if (g.moved && hypot(dx, dy) > .002f) splats.add(Splat(0, x, y, dx * 1800, dy * 1800, null, .0035f))
-        g.lx = x; g.ly = y
+        g.lx = x
+        g.ly = y
     }
 
     fun up() {
@@ -517,8 +558,15 @@ void main(){
         val l = look!!
         val dir = if (l.weight < 0) 1f else -1f
         splats.add(
-            Splat(0, g.sx + (Math.random().toFloat() - .5f) * .003f, g.sy, 0f, 150 * dir,
-                inkColor(g.color, .32f * l.size * (if (l.s.mode == 0) 1f else .7f) * l.strength), .00025f * l.size),
+            Splat(
+                0,
+                g.sx + (Math.random().toFloat() - .5f) * .003f,
+                g.sy,
+                0f,
+                150 * dir,
+                inkColor(g.color, .32f * l.size * (if (l.s.mode == 0) 1f else .7f) * l.strength),
+                .00025f * l.size,
+            ),
         )
     }
 
@@ -544,65 +592,104 @@ void main(){
         p.f("radius", sp.r)
         p.i("uTarget", vel.read.attach(0))
         p.f4("color", sp.dx, sp.dy, 0f, 0f)
-        p.f("uMin", -1e4f); p.f("uMax", 1e4f)
-        blit(vel.write); vel.swap()
+        p.f("uMin", -1e4f)
+        p.f("uMax", 1e4f)
+        blit(vel.write)
+        vel.swap()
         if (sp.c != null) {
             p.i("uTarget", dye.read.attach(0))
             p.f4("color", sp.c[0], sp.c[1], sp.c[2], sp.c[3])
-            p.f("uMin", 0f); p.f("uMax", 3.6f)
-            blit(dye.write); dye.swap()
+            p.f("uMin", 0f)
+            p.f("uMax", 3.6f)
+            blit(dye.write)
+            dye.swap()
         }
     }
 
     private fun step(dt: Float, g: Float, curl: Float, mode: Int, dyeDiss: Float, fx: Float = 0f, fy: Float = 0f) {
-        val vel = vel!!; val dye = dye!!; val pres = pres!!; val div = div!!; val curlF = curlF!!
+        val vel = vel!!
+        val dye = dye!!
+        val pres = pres!!
+        val div = div!!
+        val curlF = curlF!!
         val f = dt * 60f
         var p = progs["buoy"]!!
         p.use()
         p.f2("texelSize", vel.tx, vel.ty)
-        p.i("uVelocity", vel.read.attach(0)); p.i("uDye", dye.read.attach(1))
-        p.f("g", g); p.f("dt", dt); p.f("uMode", mode.toFloat()); p.f2("uForce", fx, fy)
+        p.i("uVelocity", vel.read.attach(0))
+        p.i("uDye", dye.read.attach(1))
+        p.f("g", g)
+        p.f("dt", dt)
+        p.f("uMode", mode.toFloat())
+        p.f2("uForce", fx, fy)
         seedF = (seedF + 1.618f) % 97f
         p.f("seed", seedF)
-        blit(vel.write); vel.swap()
+        blit(vel.write)
+        vel.swap()
 
-        p = progs["curl"]!!; p.use()
-        p.f2("texelSize", vel.tx, vel.ty); p.i("uVelocity", vel.read.attach(0))
+        p = progs["curl"]!!
+        p.use()
+        p.f2("texelSize", vel.tx, vel.ty)
+        p.i("uVelocity", vel.read.attach(0))
         blit(curlF)
 
-        p = progs["vorticity"]!!; p.use()
-        p.f2("texelSize", vel.tx, vel.ty); p.i("uVelocity", vel.read.attach(0)); p.i("uCurl", curlF.attach(1))
-        p.f("curl", curl); p.f("dt", dt)
-        blit(vel.write); vel.swap()
+        p = progs["vorticity"]!!
+        p.use()
+        p.f2("texelSize", vel.tx, vel.ty)
+        p.i("uVelocity", vel.read.attach(0))
+        p.i("uCurl", curlF.attach(1))
+        p.f("curl", curl)
+        p.f("dt", dt)
+        blit(vel.write)
+        vel.swap()
 
-        p = progs["divergence"]!!; p.use()
-        p.f2("texelSize", vel.tx, vel.ty); p.i("uVelocity", vel.read.attach(0))
+        p = progs["divergence"]!!
+        p.use()
+        p.f2("texelSize", vel.tx, vel.ty)
+        p.i("uVelocity", vel.read.attach(0))
         blit(div)
 
-        p = progs["clear"]!!; p.use()
-        p.i("uTexture", pres.read.attach(0)); p.f("value", .8f)
-        blit(pres.write); pres.swap()
+        p = progs["clear"]!!
+        p.use()
+        p.i("uTexture", pres.read.attach(0))
+        p.f("value", .8f)
+        blit(pres.write)
+        pres.swap()
 
-        p = progs["pressure"]!!; p.use()
-        p.f2("texelSize", vel.tx, vel.ty); p.i("uDivergence", div.attach(0))
+        p = progs["pressure"]!!
+        p.use()
+        p.f2("texelSize", vel.tx, vel.ty)
+        p.i("uDivergence", div.attach(0))
         repeat(22) {
             p.i("uPressure", pres.read.attach(1))
-            blit(pres.write); pres.swap()
+            blit(pres.write)
+            pres.swap()
         }
 
-        p = progs["gradient"]!!; p.use()
-        p.f2("texelSize", vel.tx, vel.ty); p.i("uPressure", pres.read.attach(0)); p.i("uVelocity", vel.read.attach(1))
-        blit(vel.write); vel.swap()
+        p = progs["gradient"]!!
+        p.use()
+        p.f2("texelSize", vel.tx, vel.ty)
+        p.i("uPressure", pres.read.attach(0))
+        p.i("uVelocity", vel.read.attach(1))
+        blit(vel.write)
+        vel.swap()
 
-        p = progs["advect"]!!; p.use()
-        p.f2("texelSize", vel.tx, vel.ty); p.f2("dyeTexelSize", vel.tx, vel.ty); p.f("dt", dt)
-        p.i("uVelocity", vel.read.attach(0)); p.i("uSource", vel.read.attach(0))
+        p = progs["advect"]!!
+        p.use()
+        p.f2("texelSize", vel.tx, vel.ty)
+        p.f2("dyeTexelSize", vel.tx, vel.ty)
+        p.f("dt", dt)
+        p.i("uVelocity", vel.read.attach(0))
+        p.i("uSource", vel.read.attach(0))
         p.f("dissipation", .988f.pow(f))
-        blit(vel.write); vel.swap()
+        blit(vel.write)
+        vel.swap()
         p.f2("dyeTexelSize", dye.tx, dye.ty)
-        p.i("uVelocity", vel.read.attach(0)); p.i("uSource", dye.read.attach(1))
+        p.i("uVelocity", vel.read.attach(0))
+        p.i("uSource", dye.read.attach(1))
         p.f("dissipation", dyeDiss.pow(f))
-        blit(dye.write); dye.swap()
+        blit(dye.write)
+        dye.swap()
     }
 
     private fun render(l: Look) {
@@ -612,10 +699,16 @@ void main(){
         p.i("uTexture", dye.read.attach(0))
         val top = lin(tone(Color.parseColor(l.s.top), l.bright, l.tint))
         val bot = lin(tone(Color.parseColor(l.s.bottom), l.bright, l.tint))
-        p.f3("top", top[0], top[1], top[2]); p.f3("bot", bot[0], bot[1], bot[2])
-        p.f("uMode", l.s.mode.toFloat()); p.f("time", simT)
-        p.f("uShade", if (l.shade) 1f else 0f); p.f("uGlow", if (l.glow) 1f else 0f); p.f("uCaustic", if (l.caustic) 1f else 0f)
-        p.f2("res", W.toFloat(), H.toFloat()); p.f2("tx", dye.tx, dye.ty); p.f2("texelSize", 0f, 0f)
+        p.f3("top", top[0], top[1], top[2])
+        p.f3("bot", bot[0], bot[1], bot[2])
+        p.f("uMode", l.s.mode.toFloat())
+        p.f("time", simT)
+        p.f("uShade", if (l.shade) 1f else 0f)
+        p.f("uGlow", if (l.glow) 1f else 0f)
+        p.f("uCaustic", if (l.caustic) 1f else 0f)
+        p.f2("res", W.toFloat(), H.toFloat())
+        p.f2("tx", dye.tx, dye.ty)
+        p.f2("texelSize", 0f, 0f)
         blit(null)
     }
 
@@ -623,10 +716,14 @@ void main(){
     fun frame() {
         var r = queue.poll()
         while (r != null) {
-            r(); r = queue.poll()
+            r()
+            r = queue.poll()
         }
         if (failed || W == 0 || dye == null) {
-            captureCb?.let { captureCb = null; it(null) }
+            captureCb?.let {
+                captureCb = null
+                it(null)
+            }
             // Unsupported device: show the style's own colour, not black.
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
             val c = lin(Color.parseColor((look ?: settings.look()).s.bottom))

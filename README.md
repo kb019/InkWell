@@ -74,6 +74,10 @@ The wallpaper engine runs its own EGL context on a render thread. Rendering paus
 - Privacy policy: [docs/privacy-policy.md](docs/privacy-policy.md)
 - Terms of service: [docs/terms-of-service.md](docs/terms-of-service.md)
 
+## Contributing
+
+Commit messages and pull request titles follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, ...); releases are generated from them. Code is formatted with ktlint through Spotless: run `./gradlew spotlessApply` before committing. CI runs both checks on pull requests.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
