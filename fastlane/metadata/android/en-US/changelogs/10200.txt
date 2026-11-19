@@ -1,0 +1,1 @@
+Feedback link in Settings and more tuning controls.
