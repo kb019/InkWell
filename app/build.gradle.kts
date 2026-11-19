@@ -6,7 +6,7 @@ plugins {
 }
 
 // Single source of truth for the version. release-please rewrites the annotated line on each release.
-val appVersion = "1.2.1" // x-release-please-version
+val appVersion = "1.2.2" // x-release-please-version
 val versionParts = appVersion.split(".").map { it.toInt() }
 
 android {

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/kb019/InkWell/compare/v1.2.1...v1.2.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* remove foojay toolchain resolver so F-Droid can build ([2ace8da](https://github.com/kb019/InkWell/commit/2ace8da1751dd2b71867625be78b27b1be6dfb80))
+* remove foojay toolchain resolver so F-Droid can build ([fd8a6be](https://github.com/kb019/InkWell/commit/fd8a6be38116ef3b930deee08196ee1481118d46))
+
 ## [1.2.1](https://github.com/kb019/InkWell/compare/v1.2.0...v1.2.1) (2026-11-19)
 
 
