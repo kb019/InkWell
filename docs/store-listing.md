@@ -2,7 +2,7 @@
 
 **App name (30 max):** Inkwell: Live Ink Wallpaper
 **Category:** Personalization
-**Contact email:** kodalibhargav019@gmail.com
+**Contact email:** jelu.labs.apps@gmail.com
 
 ## Short description (80 max)
 Real ink, moving on your home screen. Tap to drop, drag to stir.

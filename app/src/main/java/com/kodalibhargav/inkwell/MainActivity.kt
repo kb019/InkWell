@@ -10,8 +10,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import android.app.Activity
 import android.app.WallpaperManager
 import android.content.ComponentName
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.view.MotionEvent
@@ -22,6 +24,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +41,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Slider
@@ -101,6 +105,54 @@ class MainActivity : ComponentActivity() {
         capture(sim)
     }
 
+    /**
+     * Opens the user's email app with a message to the support address. The version and device are written
+     * into the body where the user can read, edit or delete them before sending. The app itself sends nothing,
+     * so it still needs no network permission.
+     */
+    private fun sendFeedback() {
+        val version = try {
+            packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+        val body = "\n\n\n---\nApp: Inkwell $version\nAndroid: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\nDevice: ${Build.MANUFACTURER} ${Build.MODEL}\n"
+        val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+            .putExtra(Intent.EXTRA_EMAIL, arrayOf(SUPPORT_EMAIL))
+            .putExtra(Intent.EXTRA_SUBJECT, "Inkwell feedback")
+            .putExtra(Intent.EXTRA_TEXT, body)
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            toast("No email app found. You can write to $SUPPORT_EMAIL")
+        }
+    }
+
+    /** Opens this app's Play Store page so the user can leave a rating. No library or network permission needed. */
+    private fun rateApp() {
+        val id = packageName
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$id")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$id")))
+            } catch (_: Exception) {
+                toast("No app can open the store page")
+            }
+        }
+    }
+
+    /** Rating links to Google Play, so hide it for installs that came from another store such as F-Droid. */
+    private fun canRate(): Boolean {
+        val installer = try {
+            if (Build.VERSION.SDK_INT >= 30) packageManager.getInstallSourceInfo(packageName).installingPackageName
+            else @Suppress("DEPRECATION") packageManager.getInstallerPackageName(packageName)
+        } catch (_: Exception) {
+            null
+        }
+        return installer == null || installer == "com.android.vending"
+    }
+
     private fun capture(sim: InkSim) {
         sim.capture { bmp ->
             Thread {
@@ -118,6 +170,7 @@ class MainActivity : ComponentActivity() {
                 android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
         val settings = InkSettings.get(this)
+        settings.setSystemNight(isNightMode(this))
         setContent {
             Studio(settings, onGlView = { glView = it }, onSim = { sim ->
                     motion = MotionSource(this, sim, settings).also { m ->
@@ -125,7 +178,8 @@ class MainActivity : ComponentActivity() {
                         m.setVisible(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
                     }
                 },
-                onSetWallpaper = { setWallpaper(this) }, onSave = ::saveImage)
+                onSetWallpaper = { setWallpaper(this) }, onSave = ::saveImage,
+                onRate = ::rateApp, showRate = canRate(), onFeedback = ::sendFeedback)
         }
     }
 
@@ -203,18 +257,26 @@ private val TUNE = listOf(
     Triple("linger", "Linger", 0f..1f),
     Triple("size", "Drop size", .4f..2f),
     Triple("speed", "Flow", .15f..1f),
+    Triple("strength", "Ink strength", .4f..1.6f),
+    Triple("bright", "Liquid brightness", -1f..1f),
+    Triple("tint", "Liquid tint", -1f..1f),
+    Triple("rainRate", "Rain rate", .3f..3f),
 )
 
 private fun fmt(key: String, v: Float) = when (key) {
     "weight" -> if (v < -.05f) "Rises" else if (v > .05f) "Sinks" else "Floats"
     "curl" -> "${(v / 40 * 100).toInt()}"
     "size" -> "%.2f×".format(v)
+    "strength" -> "${(v * 100).toInt()}%"
+    "bright" -> "%+d".format((v * 100).toInt())
+    "tint" -> "%+d°".format((v * 60).toInt())
+    "rainRate" -> "%.1f×".format(v)
     else -> "${(v * 100).toInt()}"
 }
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: (InkSim) -> Unit, onSetWallpaper: () -> Unit, onSave: (InkSim) -> Unit) {
+private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: (InkSim) -> Unit, onSetWallpaper: () -> Unit, onSave: (InkSim) -> Unit, onRate: () -> Unit, showRate: Boolean, onFeedback: () -> Unit) {
     var tick by remember { mutableIntStateOf(0) }
     DisposableEffect(settings) {
         val l = { tick++; Unit }
@@ -227,6 +289,18 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
     val s = look.s
     val sim = remember { InkSim(settings).also(onSim) }
     var tuneOpen by remember { mutableStateOf(false) }
+    var settingsOpen by remember { mutableStateOf(false) }
+    var legal by remember { mutableStateOf<Pair<String, String>?>(null) }
+    val night = isSystemInDarkTheme()
+    SideEffect { settings.setSystemNight(night) }
+    val ctx = LocalContext.current
+    val versionName = remember {
+        try {
+            ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
     var unsupported by remember { mutableStateOf(false) }
     LaunchedEffect(sim) {
         while (true) {
@@ -272,11 +346,12 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("%02d / %02d".format(settings.styleIdx + 1, STYLES.size), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
+                    val pool = settings.stylePool()
+                    Text("%02d / %02d".format(pool.indexOf(STYLES.indexOf(s)) + 1, pool.size), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
                     Text(s.name, color = fg, fontSize = 24.sp, fontWeight = FontWeight.Light)
                 }
-                TextButton(onClick = { settings.styleIdx = settings.styleIdx - 1 }) { Text("‹", color = fg, fontSize = 26.sp) }
-                TextButton(onClick = { settings.styleIdx = settings.styleIdx + 1 }) { Text("›", color = fg, fontSize = 26.sp) }
+                TextButton(onClick = { settings.stepStyle(-1) }) { Text("‹", color = fg, fontSize = 26.sp) }
+                TextButton(onClick = { settings.stepStyle(1) }) { Text("›", color = fg, fontSize = 26.sp) }
             }
 
             Row(
@@ -313,13 +388,16 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
                 Pill("Rain", settings.rain, fg, fg2) { settings.rain = !settings.rain }
                 Pill("Clear", false, fg, fg2) { sim.post { sim.clear() } }
                 Pill("Save", false, fg, fg2) { onSave(sim) }
-                Pill("Tune", tuneOpen, fg, fg2) { tuneOpen = !tuneOpen }
+                Pill("Tune", tuneOpen, fg, fg2) { tuneOpen = !tuneOpen; if (tuneOpen) settingsOpen = false }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("MOTION", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(end = 6.dp))
-                Pill("Tilt", settings.tilt, fg, fg2) { settings.tilt = !settings.tilt }
-                Pill("Shake", settings.shake, fg, fg2) { settings.shake = !settings.shake }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("MOTION", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp, modifier = Modifier.padding(end = 6.dp))
+                    Pill("Tilt", settings.tilt, fg, fg2) { settings.tilt = !settings.tilt }
+                    Pill("Shake", settings.shake, fg, fg2) { settings.shake = !settings.shake }
+                }
+                Pill("Settings", settingsOpen, fg, fg2) { settingsOpen = !settingsOpen; if (settingsOpen) tuneOpen = false }
             }
 
             if (tuneOpen) {
@@ -330,18 +408,10 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
                     for ((key, label, range) in TUNE) {
                         val v = when (key) {
                             "weight" -> look.weight; "curl" -> look.curl; "linger" -> look.linger
-                            "size" -> look.size; else -> look.speed
+                            "size" -> look.size; "strength" -> look.strength; "bright" -> look.bright
+                            "tint" -> look.tint; "rainRate" -> look.rainRate; else -> look.speed
                         }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(label.uppercase(), color = fg, fontSize = 11.sp, letterSpacing = 1.4.sp)
-                            Text(fmt(key, v), color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
-                        }
-                        Slider(
-                            value = v, onValueChange = { settings.setTweak(key, it) }, valueRange = range,
-                            colors = SliderDefaults.colors(
-                                thumbColor = fg, activeTrackColor = fg, inactiveTrackColor = fg.copy(alpha = .16f),
-                            ),
-                        )
+                        TuneSlider(label, fmt(key, v), v, range, fg, fg2) { settings.setTweak(key, it) }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Pill("Light", look.shade, fg, fg2) { settings.setTweak("shade", if (look.shade) 0f else 1f) }
@@ -349,6 +419,36 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
                         Pill("Caustics", look.caustic, fg, fg2) { settings.setTweak("caustic", if (look.caustic) 0f else 1f) }
                         Pill("Reset", false, fg, fg2) { settings.resetTweaks() }
                     }
+                }
+            }
+
+            if (settingsOpen) {
+                Column(
+                    Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text("THEME", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("All", "System", "Light", "Dark").forEachIndexed { i, name ->
+                            Pill(name, settings.theme == i, fg, fg2) { settings.theme = i }
+                        }
+                    }
+                    Text(
+                        when (settings.theme) {
+                            THEME_LIGHT -> "Only pale liquids."
+                            THEME_DARK -> "Only dark liquids."
+                            THEME_SYSTEM -> "Follows your phone's light or dark mode."
+                            else -> "Shows every style."
+                        },
+                        color = fg2, fontSize = 12.sp,
+                    )
+                    // Google Play installs go to the store page, where reviews and developer replies live.
+                    // Other installs (F-Droid, downloaded APK) have no Play page, so they use email.
+                    if (showRate) SettingsLink("Rate & give feedback", fg, onRate)
+                    else SettingsLink("Send feedback", fg, onFeedback)
+                    SettingsLink("Privacy policy", fg) { legal = "Privacy policy" to PRIVACY_POLICY }
+                    SettingsLink("Terms of service", fg) { legal = "Terms of service" to TERMS_OF_SERVICE }
+                    Text("VERSION $versionName", color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
                 }
             }
 
@@ -361,6 +461,38 @@ private fun Studio(settings: InkSettings, onGlView: (InkGlView) -> Unit, onSim: 
             ) { Text(if (unsupported) "Not supported on this device" else "Set as wallpaper", fontWeight = FontWeight.Light, fontSize = 15.sp, letterSpacing = .5.sp) }
         }
     }
+
+    legal?.let { (title, body) ->
+        AlertDialog(
+            onDismissRequest = { legal = null },
+            confirmButton = { TextButton(onClick = { legal = null }) { Text("Close") } },
+            title = { Text(title) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(body, fontSize = 14.sp) } },
+        )
+    }
+}
+
+@Composable
+private fun TuneSlider(
+    label: String, valueText: String, v: Float, range: ClosedFloatingPointRange<Float>,
+    fg: Color, fg2: Color, onChange: (Float) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label.uppercase(), color = fg, fontSize = 11.sp, letterSpacing = 1.4.sp)
+        Text(valueText, color = fg2, fontSize = 11.sp, letterSpacing = 1.4.sp)
+    }
+    Slider(
+        value = v, onValueChange = onChange, valueRange = range,
+        colors = SliderDefaults.colors(thumbColor = fg, activeTrackColor = fg, inactiveTrackColor = fg.copy(alpha = .16f)),
+    )
+}
+
+@Composable
+private fun SettingsLink(label: String, fg: Color, onClick: () -> Unit) {
+    Text(
+        label, color = fg, fontSize = 16.sp, fontWeight = FontWeight.Light,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+    )
 }
 
 @Composable
