@@ -13,7 +13,11 @@ import kotlin.math.sqrt
  * The sensor is only registered while the host is visible and the user has switched
  * Tilt or Shake on, so it costs nothing otherwise.
  */
-class MotionSource(context: Context, private val sim: InkSim, private val settings: InkSettings) : SensorEventListener {
+class MotionSource(
+    context: Context,
+    private val sim: InkSim,
+    private val settings: InkSettings,
+) : SensorEventListener {
     private val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val accel: Sensor? = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     private var gx = 0f
@@ -49,10 +53,15 @@ class MotionSource(context: Context, private val sim: InkSim, private val settin
         val y = e.values[1]
         val z = e.values[2]
         if (!primed) {
-            gx = x; gy = y; gz = z; primed = true
+            gx = x
+            gy = y
+            gz = z
+            primed = true
         }
         // Low-pass for gravity; what is left over is the shake.
-        gx += (x - gx) * .12f; gy += (y - gy) * .12f; gz += (z - gz) * .12f
+        gx += (x - gx) * .12f
+        gy += (y - gy) * .12f
+        gz += (z - gz) * .12f
 
         if (settings.tilt) {
             // Downhill in screen axes (x right, y up). Upright is neutral, lying flat has no in-plane slope.
@@ -77,5 +86,8 @@ class MotionSource(context: Context, private val sim: InkSim, private val settin
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    override fun onAccuracyChanged(
+        sensor: Sensor?,
+        accuracy: Int,
+    ) {}
 }

@@ -6,7 +6,8 @@ package com.kodalibhargav.inkwell
  */
 const val SUPPORT_EMAIL = "jelu.labs.apps@gmail.com"
 
-val PRIVACY_POLICY = """
+val PRIVACY_POLICY =
+    """
 Last updated: 7 November 2026
 
 Inkwell is a live wallpaper app. It does not collect, store, share or sell any personal data.
@@ -39,7 +40,8 @@ Contact
 Questions: $SUPPORT_EMAIL
 """.trim()
 
-val TERMS_OF_SERVICE = """
+val TERMS_OF_SERVICE =
+    """
 Last updated: 16 November 2026
 
 By installing or using Inkwell you agree to these terms. If you do not agree, please do not use the app.

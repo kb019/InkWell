@@ -15,7 +15,6 @@ import android.view.SurfaceHolder
 import androidx.core.content.ContextCompat
 
 class InkWallpaperService : WallpaperService() {
-
     override fun onCreateEngine(): Engine = InkEngine()
 
     private inner class InkEngine : Engine() {
@@ -26,11 +25,15 @@ class InkWallpaperService : WallpaperService() {
         private val onSettings = { motion.update() }
 
         // Follow the phone's light/dark mode while the wallpaper is running.
-        private val configReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                InkSettings.get(applicationContext).setSystemNight(isNightMode(this@InkWallpaperService))
+        private val configReceiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context?,
+                    intent: Intent?,
+                ) {
+                    InkSettings.get(applicationContext).setSystemNight(isNightMode(this@InkWallpaperService))
+                }
             }
-        }
 
         override fun onCreate(surfaceHolder: SurfaceHolder) {
             super.onCreate(surfaceHolder)
@@ -39,7 +42,9 @@ class InkWallpaperService : WallpaperService() {
             InkSettings.get(applicationContext).listeners.add(onSettings)
             InkSettings.get(applicationContext).setSystemNight(isNightMode(this@InkWallpaperService))
             ContextCompat.registerReceiver(
-                this@InkWallpaperService, configReceiver, IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
+                this@InkWallpaperService,
+                configReceiver,
+                IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
                 ContextCompat.RECEIVER_NOT_EXPORTED,
             )
             setTouchEventsEnabled(true)
@@ -47,13 +52,19 @@ class InkWallpaperService : WallpaperService() {
 
         override fun onSurfaceCreated(holder: SurfaceHolder) {
             super.onSurfaceCreated(holder)
-            thread = EglThread(holder, sim, supportsEs3(applicationContext)).also {
-                it.setPaused(!visible)
-                it.start()
-            }
+            thread =
+                EglThread(holder, sim, supportsEs3(applicationContext)).also {
+                    it.setPaused(!visible)
+                    it.start()
+                }
         }
 
-        override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        override fun onSurfaceChanged(
+            holder: SurfaceHolder,
+            format: Int,
+            width: Int,
+            height: Int,
+        ) {
             super.onSurfaceChanged(holder, format, width, height)
             thread?.setSize(width, height)
         }
@@ -97,7 +108,11 @@ class InkWallpaperService : WallpaperService() {
 }
 
 /** Owns the EGL context for one wallpaper surface and drives the simulation at vsync. */
-private class EglThread(private val holder: SurfaceHolder, private val sim: InkSim, private val es3: Boolean) : Thread("ink-gl") {
+private class EglThread(
+    private val holder: SurfaceHolder,
+    private val sim: InkSim,
+    private val es3: Boolean,
+) : Thread("ink-gl") {
     private val lock = Object()
     private var paused = false
     private var quit = false
@@ -105,16 +120,26 @@ private class EglThread(private val holder: SurfaceHolder, private val sim: InkS
     private var w = 0
     private var h = 0
 
-    fun setSize(w: Int, h: Int) = synchronized(lock) {
-        this.w = w; this.h = h; dirty = true; lock.notifyAll()
+    fun setSize(
+        w: Int,
+        h: Int,
+    ) = synchronized(lock) {
+        this.w = w
+        this.h = h
+        dirty = true
+        lock.notifyAll()
     }
 
     fun setPaused(p: Boolean) = synchronized(lock) {
-        paused = p; lock.notifyAll()
+        paused = p
+        lock.notifyAll()
     }
 
     fun finish() {
-        synchronized(lock) { quit = true; lock.notifyAll() }
+        synchronized(lock) {
+            quit = true
+            lock.notifyAll()
+        }
         join()
     }
 
@@ -126,11 +151,22 @@ private class EglThread(private val holder: SurfaceHolder, private val sim: InkS
             dpy = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             val v = IntArray(2)
             EGL14.eglInitialize(dpy, v, 0, v, 1)
-            val attrs = intArrayOf(
-                EGL14.EGL_RENDERABLE_TYPE, if (es3) 0x40 else EGL14.EGL_OPENGL_ES2_BIT, // 0x40 = EGL_OPENGL_ES3_BIT_KHR
-                EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8,
-                EGL14.EGL_ALPHA_SIZE, 0, EGL14.EGL_DEPTH_SIZE, 0, EGL14.EGL_NONE,
-            )
+            val attrs =
+                intArrayOf(
+                    EGL14.EGL_RENDERABLE_TYPE,
+                    if (es3) 0x40 else EGL14.EGL_OPENGL_ES2_BIT, // 0x40 = EGL_OPENGL_ES3_BIT_KHR
+                    EGL14.EGL_RED_SIZE,
+                    8,
+                    EGL14.EGL_GREEN_SIZE,
+                    8,
+                    EGL14.EGL_BLUE_SIZE,
+                    8,
+                    EGL14.EGL_ALPHA_SIZE,
+                    0,
+                    EGL14.EGL_DEPTH_SIZE,
+                    0,
+                    EGL14.EGL_NONE,
+                )
             val cfgs = arrayOfNulls<EGLConfig>(1)
             val n = IntArray(1)
             EGL14.eglChooseConfig(dpy, attrs, 0, cfgs, 0, 1, n, 0)
@@ -149,7 +185,10 @@ private class EglThread(private val holder: SurfaceHolder, private val sim: InkS
                     while ((paused || w == 0) && !quit) lock.wait()
                     if (quit) return@synchronized
                     if (dirty) {
-                        rw = w; rh = h; dirty = false; resize = true
+                        rw = w
+                        rh = h
+                        dirty = false
+                        resize = true
                     }
                 }
                 if (quit) break

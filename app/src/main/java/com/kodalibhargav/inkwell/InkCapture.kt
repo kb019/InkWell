@@ -11,16 +11,20 @@ import java.util.Locale
 
 /** Saves a captured frame to the gallery (Pictures/Inkwell). */
 object InkCapture {
-    fun save(context: Context, bitmap: Bitmap): Boolean {
+    fun save(
+        context: Context,
+        bitmap: Bitmap,
+    ): Boolean {
         val name = "Inkwell_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.png"
-        val values = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, name)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            if (Build.VERSION.SDK_INT >= 29) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Inkwell")
-                put(MediaStore.Images.Media.IS_PENDING, 1)
+        val values =
+            ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, name)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                if (Build.VERSION.SDK_INT >= 29) {
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Inkwell")
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
             }
-        }
         val resolver = context.contentResolver
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return false
         return try {
