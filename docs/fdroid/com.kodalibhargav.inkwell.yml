@@ -13,14 +13,14 @@ RepoType: git
 Repo: https://github.com/kb019/InkWell.git
 
 Builds:
-  - versionName: 1.0.1
-    versionCode: 10001
-    commit: v1.0.1
+  - versionName: 1.2.0
+    versionCode: 10200
+    commit: v1.2.0
     subdir: app
     gradle:
       - yes
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.0.1
-CurrentVersionCode: 10001
+CurrentVersion: 1.2.0
+CurrentVersionCode: 10200
