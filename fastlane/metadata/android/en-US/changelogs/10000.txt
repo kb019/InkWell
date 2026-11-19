@@ -1,5 +1,0 @@
-First release.
-- Live ink wallpaper with 11 themes and 6 ink forms
-- Tap, hold and drag interaction
-- Optional tilt and shake effects
-- Save the current frame to the gallery
