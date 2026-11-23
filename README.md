@@ -23,13 +23,22 @@
 
 ## Screenshots
 
-<p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpeg" alt="Porcelain style with the Thread ink form" width="19%">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpeg" alt="Tide style with the tuning sliders open" width="19%">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg" alt="Settings sheet with theme options" width="19%">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg" alt="Inkwell as a home screen wallpaper" width="19%">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpeg" alt="Inkwell as a lock screen wallpaper" width="19%">
-</p>
+<table align="center">
+  <tr>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpeg" width="170" alt="Porcelain"></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpeg" width="170" alt="Tide, tuning"></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg" width="170" alt="Settings"></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg" width="170" alt="Home screen"></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.jpeg" width="170" alt="Lock screen"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Porcelain</b></sub></td>
+    <td align="center"><sub><b>Tide, tuning</b></sub></td>
+    <td align="center"><sub><b>Settings</b></sub></td>
+    <td align="center"><sub><b>Home screen</b></sub></td>
+    <td align="center"><sub><b>Lock screen</b></sub></td>
+  </tr>
+</table>
 
 ## Features
 
