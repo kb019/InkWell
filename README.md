@@ -10,9 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://play.google.com/store/apps/details?id=com.kodalibhargav.inkwell"><img alt="Get it on Google Play" src="https://img.shields.io/badge/Google%20Play-Get%20it%20now-01875f?style=for-the-badge&logo=googleplay&logoColor=white" height="64"></a>
-  &nbsp;&nbsp;
-  <a href="https://www.openapk.net/inkwell/com.kodalibhargav.inkwell/"><img alt="Download on OpenAPK" src="https://img.shields.io/badge/OpenAPK-Download%20APK-f26b21?style=for-the-badge&logo=android&logoColor=white" height="64"></a>
+  <a href="https://play.google.com/store/apps/details?id=com.kodalibhargav.inkwell"><img alt="Get it on Google Play" src="docs/images/google-play-badge.png" height="80"></a>
+  <a href="https://www.openapk.net/inkwell/com.kodalibhargav.inkwell/"><img alt="Download from OpenAPK" src="docs/images/openapk-badge.png" height="80"></a>
 </p>
 
 <p align="center">
