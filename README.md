@@ -18,6 +18,12 @@
 </p>
 
 <p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.kodalibhargav.inkwell"><img alt="Get it on Google Play" src="https://img.shields.io/badge/Google%20Play-Get%20it%20on-01875f?style=for-the-badge&logo=googleplay&logoColor=white"></a>
+  <a href="https://www.openapk.net/inkwell/com.kodalibhargav.inkwell/"><img alt="Download on OpenAPK" src="https://img.shields.io/badge/OpenAPK-Download-f26b21?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/kb019/InkWell/releases/latest"><img alt="GitHub Releases" src="https://img.shields.io/badge/GitHub-Releases-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+</p>
+
+<p align="center">
   <img src="docs/images/banner.webp" alt="Inkwell: real ink, moving on your home screen" width="100%">
 </p>
 
@@ -61,7 +67,13 @@
 
 ## Install
 
-Download the latest signed APK from the [**Releases**](https://github.com/kb019/InkWell/releases/latest) page, check it against `SHA256SUMS.txt`, and open it on your phone. Then launch Inkwell and tap **Set as wallpaper**.
+Inkwell is available from:
+
+- [**Google Play**](https://play.google.com/store/apps/details?id=com.kodalibhargav.inkwell)
+- [**OpenAPK**](https://www.openapk.net/inkwell/com.kodalibhargav.inkwell/)
+- [**GitHub Releases**](https://github.com/kb019/InkWell/releases/latest): signed APK, checkable against `SHA256SUMS.txt`
+
+After installing, launch Inkwell and tap **Set as wallpaper**.
 
 **Requirements:** Android 8.0 (API 26) or newer, and a GPU that can render to half-float textures (OpenGL ES 3.0, or ES 2.0 with `EXT_color_buffer_half_float`). Devices that can't run the simulation show a message and can't set the wallpaper.
 
