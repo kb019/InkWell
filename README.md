@@ -10,17 +10,16 @@
 </p>
 
 <p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.kodalibhargav.inkwell"><img alt="Get it on Google Play" src="docs/images/google-play-badge.png" height="80"></a>
+  <a href="https://www.openapk.net/inkwell/com.kodalibhargav.inkwell/"><img alt="Download from OpenAPK" src="docs/images/openapk-badge.png" height="80"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/kb019/InkWell/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/kb019/InkWell?style=flat-square&color=1f6feb"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2ea043?style=flat-square"></a>
   <img alt="Android 8.0+" src="https://img.shields.io/badge/Android-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
   <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7f52ff?style=flat-square&logo=kotlin&logoColor=white">
   <img alt="No network" src="https://img.shields.io/badge/permissions-no%20internet-8250df?style=flat-square">
-</p>
-
-<p align="center">
-  <a href="https://play.google.com/store/apps/details?id=com.kodalibhargav.inkwell"><img alt="Get it on Google Play" src="https://img.shields.io/badge/Google%20Play-Get%20it%20on-01875f?style=for-the-badge&logo=googleplay&logoColor=white"></a>
-  <a href="https://www.openapk.net/inkwell/com.kodalibhargav.inkwell/"><img alt="Download on OpenAPK" src="https://img.shields.io/badge/OpenAPK-Download-f26b21?style=for-the-badge&logo=android&logoColor=white"></a>
-  <a href="https://github.com/kb019/InkWell/releases/latest"><img alt="GitHub Releases" src="https://img.shields.io/badge/GitHub-Releases-181717?style=for-the-badge&logo=github&logoColor=white"></a>
 </p>
 
 <p align="center">
